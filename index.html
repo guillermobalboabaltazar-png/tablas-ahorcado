@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
-        /* ===== ESTILOS COMPLETOS (MISMO QUE ANTES) ===== */
+        /* ===== ESTILOS COMPLETOS (MISMO QUE LA VERSIÓN ORIGINAL) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -152,6 +152,7 @@
             white-space: nowrap;
         }
 
+        /* ─── TEMPORIZADOR ─── */
         .timer-container {
             display: flex;
             align-items: center;
@@ -191,6 +192,7 @@
             min-width: 40px;
         }
 
+        /* ─── AHORCADO SVG ─── */
         .hangman-container {
             display: flex;
             justify-content: center;
@@ -220,6 +222,7 @@
             opacity: 1;
         }
 
+        /* ─── PREGUNTA ─── */
         .question-area {
             background: white;
             border-radius: 48px;
@@ -253,6 +256,7 @@
             display: inline-block;
         }
 
+        /* ─── OPCIONES MÚLTIPLES (MISMO ESTILO QUE LOS BOTONES) ─── */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -651,13 +655,11 @@
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
             const [repeticiones, setRepeticiones] = useState({});
 
-            // Refs para controlar temporizadores
+            // Refs para temporizadores
             const timerIntervalRef = useRef(null);
             const timerTimeoutRef = useRef(null);
-            const timeoutHandledRef = useRef(false);
+            const timeoutExecutedRef = useRef(false);
             const currentQuestionRef = useRef({ mult: 2, mult2: 1 });
-
-            const timeoutRef = useRef(null);
 
             // ─── LIMPIAR TEMPORIZADORES ───
             const limpiarTimers = useCallback(() => {
@@ -669,7 +671,7 @@
                     clearTimeout(timerTimeoutRef.current);
                     timerTimeoutRef.current = null;
                 }
-                timeoutHandledRef.current = false;
+                timeoutExecutedRef.current = false;
             }, []);
 
             // ─── AGREGAR REPETICIÓN ───
@@ -734,13 +736,12 @@
 
             // ─── MANEJAR TIMEOUT (se ejecuta cuando se acaba el tiempo) ───
             const manejarTimeout = useCallback((tabla, mult) => {
-                if (timeoutHandledRef.current) return;
+                if (timeoutExecutedRef.current) return;
                 if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
 
-                timeoutHandledRef.current = true;
+                timeoutExecutedRef.current = true;
                 limpiarTimers();
 
-                // Agregar repetición
                 agregarRepeticion(tabla, mult);
 
                 const correcto = tabla * mult;
@@ -748,8 +749,7 @@
                 setFeedbackAnim(true);
 
                 // Consumir corazón
-                const nuevosErrores = errores + 1;
-                setErrores(nuevosErrores);
+                setErrores(prev => prev + 1);
                 if (!modoRepaso) {
                     setAciertosEnTabla(0);
                 }
@@ -757,14 +757,13 @@
                 // Resaltar la respuesta correcta
                 setRespuestaSeleccionada(-1);
 
-                if (nuevosErrores >= MAX_ERRORES) {
+                if (errores + 1 >= MAX_ERRORES) {
                     setEstadoJuego('gameover');
                     setEsperandoSiguiente(true);
                     setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
                     return;
                 }
 
-                // Bloquear y pasar a siguiente después de 1.2s
                 setEsperandoSiguiente(true);
                 setTimeout(() => {
                     cargarNuevaPregunta();
@@ -776,7 +775,7 @@
                 if (estadoJuego !== 'jugando') return;
 
                 limpiarTimers();
-                timeoutHandledRef.current = false;
+                timeoutExecutedRef.current = false;
 
                 const pregunta = generarPregunta();
                 const mult = pregunta.multiplicando;
@@ -794,24 +793,19 @@
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
 
-                // Guardar referencia de la pregunta actual para el timeout
                 currentQuestionRef.current = { mult, mult2 };
 
-                // Iniciar temporizador
                 setTiempoRestante(TIEMPO_PREGUNTA);
 
-                // Intervalo para actualizar la barra cada segundo
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
                         if (prev <= 1) {
-                            // No hacemos nada aquí, el timeout principal se encarga
                             return 0;
                         }
                         return prev - 1;
                     });
                 }, 1000);
 
-                // Timeout principal que dispara el error
                 timerTimeoutRef.current = setTimeout(() => {
                     const { mult: m, mult2: m2 } = currentQuestionRef.current;
                     manejarTimeout(m, m2);
@@ -836,16 +830,15 @@
                 }
             }, [tablaActual, limpiarTimers]);
 
-            // ─── PROCESAR RESPUESTA (clic en opción) ───
+            // ─── PROCESAR RESPUESTA ───
             const procesarRespuesta = useCallback((indice) => {
                 if (esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null) return;
                 const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                // Detener todos los temporizadores
                 limpiarTimers();
-                timeoutHandledRef.current = true;
+                timeoutExecutedRef.current = true;
 
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
@@ -870,7 +863,7 @@
                     setEsperandoSiguiente(true);
                     setTimeout(() => {
                         cargarNuevaPregunta();
-                    }, 800);
+                    }, 1500);
                 } else {
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
@@ -903,8 +896,7 @@
             // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
                 limpiarTimers();
-                if (timeoutRef.current) clearTimeout(timeoutRef.current);
-                timeoutHandledRef.current = false;
+                timeoutExecutedRef.current = false;
                 setTablaActual(TABLA_MIN);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
