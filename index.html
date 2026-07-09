@@ -83,6 +83,22 @@
             gap: 6px;
             box-shadow: 0 4px 0 #1a0f23;
         }
+        .score-display {
+            background: #7c4d9e;
+            padding: 6px 18px 6px 14px;
+            border-radius: 40px;
+            color: #fef9e7;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 0 #4a2f5e;
+        }
+        .score-display.negative {
+            background: #c0392b;
+            box-shadow: 0 4px 0 #7a241a;
+        }
         .table-progress {
             background: #ede4f5;
             border-radius: 60px;
@@ -428,11 +444,20 @@
             font-size: 18px;
             color: #5f3f75;
         }
+        .game-over-score {
+            font-size: 28px;
+            font-weight: 700;
+            color: #7c4d9e;
+            margin: 8px 0;
+        }
         .win-overlay {
             background: #d4f0e6;
             border: 2px solid #1f5f44;
         }
         .win-overlay h2 {
+            color: #1f5f44;
+        }
+        .win-overlay .game-over-score {
             color: #1f5f44;
         }
         .records-container {
@@ -471,12 +496,23 @@
         .record-name {
             flex: 1;
         }
+        .record-stats {
+            display: flex;
+            gap: 8px;
+        }
         .record-tabla {
             background: #f7e9ff;
             padding: 2px 10px;
             border-radius: 20px;
             font-weight: 700;
             color: #6a3f7e;
+        }
+        .record-score {
+            background: #d4e8ff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #2c5aa0;
         }
         .progress-buttons {
             display: flex;
@@ -533,6 +569,10 @@
                 font-size: 16px;
                 padding: 4px 12px;
             }
+            .score-display {
+                font-size: 16px;
+                padding: 4px 12px;
+            }
             .game-title {
                 font-size: 18px;
             }
@@ -546,6 +586,10 @@
             }
             .timer-bar {
                 width: 80px;
+            }
+            .record-stats {
+                flex-direction: column;
+                gap: 4px;
             }
         }
         .shake {
@@ -638,16 +682,16 @@
             }
         };
 
-        const agregarRecord = (nombre, tablaAlcanzada, preguntas) => {
+        const agregarRecord = (nombre, tablaAlcanzada, score) => {
             const records = obtenerRecords();
             const nuevoRecord = {
                 nombre,
                 tablaAlcanzada,
-                preguntas,
+                score,
                 fecha: new Date().toLocaleDateString('es-ES')
             };
             records.push(nuevoRecord);
-            records.sort((a, b) => b.tablaAlcanzada - a.tablaAlcanzada || b.preguntas - a.preguntas);
+            records.sort((a, b) => b.score - a.score || b.tablaAlcanzada - a.tablaAlcanzada);
             const top3 = records.slice(0, 3);
             guardarRecords(top3);
         };
@@ -691,6 +735,7 @@
             const [aciertosEnTabla, setAciertosEnTabla] = useState(0);
             const [tablasDominadas, setTablasDominadas] = useState(new Set());
             const [errores, setErrores] = useState(0);
+            const [score, setScore] = useState(0);
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
@@ -832,6 +877,7 @@
                 setFeedbackAnim(true);
                 const nuevosErrores = errores + 1;
                 setErrores(nuevosErrores);
+                setScore(prev => prev - 1);
                 if (!modoRepaso) {
                     setAciertosEnTabla(0);
                 }
@@ -841,7 +887,7 @@
                     setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
                     limpiarTimers();
                     timeoutActivoRef.current = false;
-                    agregarRecord(nombre, tablaActual - 1, contadorPreguntas);
+                    agregarRecord(nombre, tablaActual - 1, score - 1);
                     guardarTablaProgress(nombre, tablaActual - 1);
                     return;
                 }
@@ -852,7 +898,7 @@
                     timeoutActivoRef.current = false;
                     cargarNuevaPregunta();
                 }, 1200);
-            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta, contadorPreguntas, nombre, tablaActual]);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta, nombre, tablaActual, score]);
 
             // ─── AVANZAR TABLA ───
             const avanzarTabla = useCallback(() => {
@@ -869,10 +915,10 @@
                     setEsperandoSiguiente(true);
                     limpiarTimers();
                     timeoutActivoRef.current = false;
-                    agregarRecord(nombre, TABLA_MAX, contadorPreguntas);
+                    agregarRecord(nombre, TABLA_MAX, score);
                     guardarTablaProgress(nombre, TABLA_MAX);
                 }
-            }, [tablaActual, limpiarTimers, contadorPreguntas, nombre, tablaInicial]);
+            }, [tablaActual, limpiarTimers, nombre, tablaInicial, score]);
 
             // ─── PROCESAR RESPUESTA ───
             const procesarRespuesta = useCallback((indice) => {
@@ -888,6 +934,7 @@
                     setFeedback({ mensaje: `✅ ¡Muy bien! ${multiplicando} × ${multiplicador} = ${correcto}`,
                     tipo: 'correct' });
                     setFeedbackAnim(true);
+                    setScore(prev => prev + 1);
                     if (!modoRepaso) {
                         const nuevosAciertos = aciertosEnTabla + 1;
                         setAciertosEnTabla(nuevosAciertos);
@@ -907,6 +954,7 @@
                 } else {
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
+                    setScore(prev => prev - 1);
                     agregarRepeticion(multiplicando, multiplicador);
                     const nuevosErrores = errores + 1;
                     setErrores(nuevosErrores);
@@ -917,7 +965,7 @@
                         setEstadoJuego('gameover');
                         setEsperandoSiguiente(true);
                         setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
-                        agregarRecord(nombre, tablaActual - 1, contadorPreguntas + 1);
+                        agregarRecord(nombre, tablaActual - 1, score - 1);
                         guardarTablaProgress(nombre, tablaActual - 1);
                         return;
                     }
@@ -928,7 +976,7 @@
                 }
             }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
                 tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimers,
-                agregarRepeticion, avanzarTabla, cargarNuevaPregunta, nombre, contadorPreguntas
+                agregarRepeticion, avanzarTabla, cargarNuevaPregunta, nombre, score
             ]);
 
             // ─── REINICIAR ───
@@ -939,6 +987,7 @@
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
                 setErrores(0);
+                setScore(0);
                 setContadorPreguntas(0);
                 setModoRepaso(false);
                 setTablaRepaso(null);
@@ -1035,14 +1084,17 @@
                                             {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
                                         </span>
                                         <span className="record-name">{record.nombre}</span>
-                                        <span className="record-tabla">Tabla {record.tablaAlcanzada}</span>
+                                        <div className="record-stats">
+                                            <span className="record-tabla">Tabla {record.tablaAlcanzada}</span>
+                                            <span className="record-score">⭐ {record.score} pts</span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                         <div style={{ marginTop: 16, fontSize: 14, color: '#7a5a8f' }}>
                             ⏱️ Contesta antes de que se acabe el tiempo.<br />
-                            ❌ Cada fallo añade una parte del ahorcado (7 errores = pierdes).<br />
+                            ✅ +1 punto por acierto | ❌ -1 punto por error<br />
                             🔁 Las operaciones falladas se repiten 10 veces para aprender.
                         </div>
                     </div>
@@ -1058,6 +1110,9 @@
                         </div>
                         <div className="vidas">
                             ❤️ {vidasRestantes} / {MAX_ERRORES}
+                        </div>
+                        <div className={`score-display ${score < 0 ? 'negative' : ''}`}>
+                            ⭐ {score} puntos
                         </div>
                     </div>
                     <div className="table-progress">
@@ -1132,6 +1187,9 @@
                                     ? `Has cometido ${errores} errores. ¡Ánimo, inténtalo de nuevo!`
                                     : `¡Dominaste todas las tablas del ${tablaInicial} al ${TABLA_MAX}! Eres una campeona.`}
                             </p>
+                            <div className="game-over-score">
+                                ⭐ PUNTUACIÓN FINAL: {score} puntos
+                            </div>
                             <button className="btn-secondary success" onClick={reiniciarJuego} style={{ marginTop: 12 }}>
                                 🔄 Volver a jugar
                             </button>
