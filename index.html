@@ -595,7 +595,7 @@
         const CORRECTAS_PARA_DOMINAR = 10;
         const MAX_ERRORES = 7;
         const TIEMPO_PREGUNTA = 8;
-        const NUM_OPCIONES = 6; // 5 incorrectas + 1 correcta
+        const NUM_OPCIONES = 6;
 
         // ─── COMPONENTE AHORCADO SVG ───
         function Hangman({ errores }) {
@@ -638,7 +638,7 @@
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
-            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // índice o -1 para timeout
+            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
 
@@ -650,7 +650,8 @@
 
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
             const timerIntervalRef = useRef(null);
-            const loadTimeoutRef = useRef(null); // para el setTimeout de cargar siguiente
+            const loadTimeoutRef = useRef(null);
+            const timeoutActivoRef = useRef(false); // evita ejecutar timeout múltiple
 
             const [repeticiones, setRepeticiones] = useState({});
 
@@ -664,6 +665,7 @@
                     clearTimeout(loadTimeoutRef.current);
                     loadTimeoutRef.current = null;
                 }
+                timeoutActivoRef.current = false;
             }, []);
 
             // ─── AGREGAR REPETICIÓN ───
@@ -692,7 +694,6 @@
                     }
                     intentos++;
                 }
-                // Fallback por si no se completaron
                 let fallback = 1;
                 while (opcionesSet.size < NUM_OPCIONES) {
                     if (!opcionesSet.has(fallback) && fallback !== correcto) {
@@ -700,7 +701,6 @@
                     }
                     fallback++;
                 }
-                // Mezclar
                 const arr = Array.from(opcionesSet);
                 for (let i = arr.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -709,7 +709,7 @@
                 return arr;
             };
 
-            // ─── GENERAR PREGUNTA (con prioridad de repeticiones) ───
+            // ─── GENERAR PREGUNTA ───
             const generarPregunta = useCallback(() => {
                 const claves = Object.keys(repeticiones).filter(k => repeticiones[k] > 0);
                 if (claves.length > 0) {
@@ -732,7 +732,8 @@
             const cargarNuevaPregunta = useCallback(() => {
                 if (estadoJuego !== 'jugando') return;
 
-                limpiarTimers(); // limpia cualquier timer pendiente
+                limpiarTimers();
+                timeoutActivoRef.current = false; // reset
 
                 const pregunta = generarPregunta();
                 const mult = pregunta.multiplicando;
@@ -750,15 +751,16 @@
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
 
-                // Iniciar temporizador
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
                         if (prev <= 1) {
                             clearInterval(timerIntervalRef.current);
                             timerIntervalRef.current = null;
-                            // Timeout → error
-                            manejarTimeout(mult, mult2);
+                            // Solo ejecutar si no hay un timeout en progreso
+                            if (!timeoutActivoRef.current) {
+                                manejarTimeout(mult, mult2);
+                            }
                             return 0;
                         }
                         return prev - 1;
@@ -769,7 +771,9 @@
             // ─── MANEJAR TIMEOUT ───
             const manejarTimeout = useCallback((tabla, mult) => {
                 if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
-                // Agregar repetición
+                if (timeoutActivoRef.current) return; // ya se está procesando
+                timeoutActivoRef.current = true;
+
                 agregarRepeticion(tabla, mult);
                 setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
                 setFeedbackAnim(true);
@@ -785,14 +789,15 @@
                     setEsperandoSiguiente(true);
                     setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
                     limpiarTimers();
+                    timeoutActivoRef.current = false;
                     return;
                 }
 
-                // Marcar respuesta como incorrecta (timeout)
                 setRespuestaSeleccionada(-1);
                 setEsperandoSiguiente(true);
-                limpiarTimers(); // limpia el intervalo (ya lo está) y cualquier timeout
+                limpiarTimers();
                 loadTimeoutRef.current = setTimeout(() => {
+                    timeoutActivoRef.current = false;
                     cargarNuevaPregunta();
                 }, 1200);
             }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta]);
@@ -811,17 +816,19 @@
                         tipo: 'success' });
                     setEsperandoSiguiente(true);
                     limpiarTimers();
+                    timeoutActivoRef.current = false;
                 }
             }, [tablaActual, limpiarTimers]);
 
-            // ─── PROCESAR RESPUESTA (clic en opción) ───
+            // ─── PROCESAR RESPUESTA ───
             const procesarRespuesta = useCallback((indice) => {
                 if (esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null) return;
                 const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                limpiarTimers(); // detener temporizador
+                limpiarTimers();
+                timeoutActivoRef.current = false;
 
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
@@ -843,13 +850,11 @@
                             return;
                         }
                     }
-                    // Siguiente inmediata
                     setEsperandoSiguiente(true);
                     loadTimeoutRef.current = setTimeout(() => {
                         cargarNuevaPregunta();
                     }, 800);
                 } else {
-                    // Error
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
 
@@ -878,9 +883,10 @@
                 agregarRepeticion, avanzarTabla, cargarNuevaPregunta
             ]);
 
-            // ─── REINICIAR JUEGO ───
+            // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
                 limpiarTimers();
+                timeoutActivoRef.current = false;
                 setTablaActual(TABLA_MIN);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
@@ -902,11 +908,9 @@
                 if (empezado) {
                     cargarNuevaPregunta();
                 }
-                // Limpieza al desmontar
                 return () => limpiarTimers();
             }, [empezado, cargarNuevaPregunta, limpiarTimers]);
 
-            // ─── CÁLCULOS PARA RENDER ───
             const dominadasArray = [...tablasDominadas].sort((a, b) => a - b);
             const masteryPercent = Math.min(100, (aciertosEnTabla / CORRECTAS_PARA_DOMINAR) * 100);
             const vidasRestantes = MAX_ERRORES - errores;
@@ -1056,6 +1060,7 @@
                             className="btn-secondary"
                             onClick={() => {
                                 limpiarTimers();
+                                timeoutActivoRef.current = false;
                                 cargarNuevaPregunta();
                             }}
                             disabled={estadoJuego !== 'jugando'}
