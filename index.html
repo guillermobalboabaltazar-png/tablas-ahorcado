@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>⏳ Ahorcado de Tablas · Opciones</title>
+    <meta name="theme-color" content="#6f3f92" />
+    <meta name="description" content="Ahorcado de Tablas - Juego educativo para aprender tablas de multiplicar del 2 al 15 con sistema de puntos, progresión y TOP 3 records." />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ahorcado Tablas" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="purple" />
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%236f3f92' width='180' height='180'/><text x='90' y='90' font-size='100' fill='white' text-anchor='middle' dominant-baseline='middle'>⏳</text></svg>" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%236f3f92' width='180' height='180' rx='40'/><text x='90' y='90' font-size='100' fill='white' text-anchor='middle' dominant-baseline='middle'>⏳</text></svg>" />
+
+    <title>⏳ Ahorcado de Tablas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -543,6 +554,38 @@
             color: white;
             box-shadow: 0 3px 0 #462e5a;
         }
+        .pwa-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #6f3f92;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(111, 63, 146, 0.3);
+            display: none;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out;
+        }
+        .pwa-badge.show {
+            display: block;
+        }
+        .pwa-badge:hover {
+            background: #5a2f7a;
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
         @media (max-width: 480px) {
             .game-card {
                 padding: 16px 12px 24px;
@@ -591,6 +634,12 @@
                 flex-direction: column;
                 gap: 4px;
             }
+            .pwa-badge {
+                bottom: 10px;
+                right: 10px;
+                font-size: 12px;
+                padding: 8px 14px;
+            }
         }
         .shake {
             animation: shake 0.3s ease;
@@ -627,12 +676,12 @@
 </head>
 <body>
     <div id="root"></div>
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.20/babel.min.js">
-    </script>
+    <div id="pwa-badge" class="pwa-badge">📲 Instalar Juego</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.20/babel.min.js"></script>
+
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
         const TABLA_MIN = 2;
@@ -753,10 +802,53 @@
             const timeoutActivoRef = useRef(false);
             const [repeticiones, setRepeticiones] = useState({});
             const [records, setRecords] = useState([]);
+            const deferredPromptRef = useRef(null);
 
             // ─── CARGAR RECORDS AL INICIO ───
             useEffect(() => {
                 setRecords(obtenerRecords());
+            }, []);
+
+            // ─── PWA INSTALL PROMPT ───
+            useEffect(() => {
+                const handleBeforeInstallPrompt = (e) => {
+                    e.preventDefault();
+                    deferredPromptRef.current = e;
+                    document.getElementById('pwa-badge').classList.add('show');
+                };
+
+                window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+                // Mostrar badge en phones
+                if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                    if (!navigator.standalone) {
+                        document.getElementById('pwa-badge').classList.add('show');
+                    }
+                }
+
+                return () => {
+                    window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+                };
+            }, []);
+
+            // ─── CLICK EN BADGE ───
+            useEffect(() => {
+                const badge = document.getElementById('pwa-badge');
+                const handleClick = () => {
+                    if (deferredPromptRef.current) {
+                        deferredPromptRef.current.prompt();
+                        deferredPromptRef.current.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('PWA instalado');
+                                badge.classList.remove('show');
+                            }
+                            deferredPromptRef.current = null;
+                        });
+                    }
+                };
+
+                badge.addEventListener('click', handleClick);
+                return () => badge.removeEventListener('click', handleClick);
             }, []);
 
             // ─── LIMPIAR TODOS LOS TEMPORIZADORES ───
@@ -1220,6 +1312,21 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration);
+                    })
+                    .catch(error => {
+                        console.log('⚠️ Service Worker error:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
