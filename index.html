@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>⏳ Ahorcado de Tablas con Opciones</title>
+    <title>⏳ Ahorcado de Tablas · Opciones</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -151,7 +151,6 @@
             white-space: nowrap;
         }
 
-        /* ─── TEMPORIZADOR ─── */
         .timer-container {
             display: flex;
             align-items: center;
@@ -191,7 +190,6 @@
             min-width: 40px;
         }
 
-        /* ─── AHORCADO SVG ─── */
         .hangman-container {
             display: flex;
             justify-content: center;
@@ -259,50 +257,50 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-top: 18px;
+            margin: 18px 0 8px;
         }
 
         .option-btn {
             font-family: 'Quicksand', sans-serif;
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
-            padding: 14px 8px;
-            border: 3px solid #d4c0e2;
-            border-radius: 20px;
-            background: #faf7fc;
-            color: #261a30;
+            padding: 14px 0;
+            border: none;
+            border-radius: 30px;
+            background: #ede4f5;
+            color: #3f2355;
+            box-shadow: 0 6px 0 #c5b2d3;
             cursor: pointer;
-            transition: transform 0.1s, background 0.2s, border-color 0.2s;
-            box-shadow: 0 4px 0 #d4c0e2;
+            transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
+            text-align: center;
+            touch-action: manipulation;
         }
 
         .option-btn:active {
             transform: translateY(4px);
-            box-shadow: 0 0px 0 #d4c0e2;
-        }
-
-        .option-btn:hover:not(:disabled) {
-            background: #ede4f5;
-            border-color: #9b72bb;
+            box-shadow: 0 2px 0 #c5b2d3;
         }
 
         .option-btn:disabled {
             opacity: 0.5;
-            cursor: not-allowed;
             transform: translateY(2px);
-            box-shadow: 0 2px 0 #d4c0e2;
+            box-shadow: 0 3px 0 #c5b2d3;
+            pointer-events: none;
         }
 
-        .option-btn.correct {
-            background: #c8e6d9;
-            border-color: #2a7a4a;
-            box-shadow: 0 4px 0 #2a7a4a;
+        .option-btn.correct-answer {
+            background: #7dcea0;
+            box-shadow: 0 6px 0 #4a8c6a;
         }
 
-        .option-btn.wrong {
-            background: #f8d8dc;
-            border-color: #b13e4b;
-            box-shadow: 0 4px 0 #b13e4b;
+        .option-btn.wrong-answer {
+            background: #f5a0a0;
+            box-shadow: 0 6px 0 #b35a5a;
+        }
+
+        .option-btn.reveal-correct {
+            background: #7dcea0;
+            box-shadow: 0 6px 0 #4a8c6a;
         }
 
         .feedback {
@@ -512,13 +510,12 @@
             .question-text .eq {
                 font-size: 26px;
             }
-            .options-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
             .option-btn {
                 font-size: 20px;
-                padding: 12px 6px;
+                padding: 12px 0;
+            }
+            .options-grid {
+                gap: 8px;
             }
             .hangman-svg {
                 width: 100px;
@@ -598,6 +595,7 @@
         const CORRECTAS_PARA_DOMINAR = 10;
         const MAX_ERRORES = 7;
         const TIEMPO_PREGUNTA = 8;
+        const NUM_OPCIONES = 6; // 5 incorrectas + 1 correcta
 
         // ─── COMPONENTE AHORCADO SVG ───
         function Hangman({ errores }) {
@@ -640,7 +638,7 @@
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
-            const [opcionSeleccionada, setOpcionSeleccionada] = useState(null);
+            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // índice
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
 
@@ -652,34 +650,10 @@
 
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
             const timerIntervalRef = useRef(null);
+
             const [repeticiones, setRepeticiones] = useState({});
 
-            // ─── GENERAR OPCIONES ───
-            const generarOpciones = useCallback((correcta) => {
-                const opcionesSet = new Set([correcta]);
-                let intentos = 0;
-                while (opcionesSet.size < 6 && intentos < 100) {
-                    let offset = Math.floor(Math.random() * 10) + 1;
-                    let candidato = correcta + (Math.random() > 0.5 ? offset : -offset);
-                    if (candidato >= 1 && candidato <= 200 && !opcionesSet.has(candidato)) {
-                        opcionesSet.add(candidato);
-                    }
-                    intentos++;
-                }
-                // Si no se llenaron, rellenar con números seguros
-                let fallback = 1;
-                while (opcionesSet.size < 6) {
-                    if (!opcionesSet.has(fallback)) opcionesSet.add(fallback);
-                    fallback++;
-                }
-                const arr = Array.from(opcionesSet);
-                // Barajar
-                for (let i = arr.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [arr[i], arr[j]] = [arr[j], arr[i]];
-                }
-                return arr;
-            }, []);
+            const timeoutRef = useRef(null);
 
             // ─── LIMPIAR TEMPORIZADOR ───
             const limpiarTimer = useCallback(() => {
@@ -688,54 +662,6 @@
                     timerIntervalRef.current = null;
                 }
             }, []);
-
-            // ─── INICIAR TEMPORIZADOR ───
-            const iniciarTimer = useCallback(() => {
-                limpiarTimer();
-                setTiempoRestante(TIEMPO_PREGUNTA);
-                timerIntervalRef.current = setInterval(() => {
-                    setTiempoRestante(prev => {
-                        if (prev <= 1) {
-                            clearInterval(timerIntervalRef.current);
-                            timerIntervalRef.current = null;
-                            manejarTimeout();
-                            return 0;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
-            }, [limpiarTimer]);
-
-            // ─── MANEJAR TIMEOUT ───
-            const manejarTimeout = useCallback(() => {
-                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
-                const tabla = multiplicando;
-                const mult = multiplicador;
-                agregarRepeticion(tabla, mult);
-
-                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
-                setFeedbackAnim(true);
-
-                const nuevosErrores = errores + 1;
-                setErrores(nuevosErrores);
-                if (!modoRepaso) {
-                    setAciertosEnTabla(0);
-                }
-
-                if (nuevosErrores >= MAX_ERRORES) {
-                    setEstadoJuego('gameover');
-                    setEsperandoSiguiente(true);
-                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
-                    limpiarTimer();
-                    return;
-                }
-
-                setEsperandoSiguiente(true);
-                limpiarTimer();
-                setTimeout(() => {
-                    cargarNuevaPregunta();
-                }, 800);
-            }, [multiplicando, multiplicador, errores, modoRepaso, estadoJuego, esperandoSiguiente, limpiarTimer]);
 
             // ─── AGREGAR REPETICIÓN ───
             const agregarRepeticion = useCallback((tabla, mult) => {
@@ -747,7 +673,41 @@
                 });
             }, []);
 
-            // ─── GENERAR PREGUNTA ───
+            // ─── GENERAR OPCIONES ───
+            const generarOpciones = (correcto) => {
+                // Generar 5 números distintos a correcto y entre sí, en un rango razonable (1..200)
+                const opcionesSet = new Set();
+                opcionesSet.add(correcto);
+                let intentos = 0;
+                const maxIntentos = 1000;
+                while (opcionesSet.size < NUM_OPCIONES && intentos < maxIntentos) {
+                    const offset = Math.floor(Math.random() * 20) + 1; // variación
+                    const signo = Math.random() < 0.5 ? 1 : -1;
+                    let candidato = correcto + signo * offset;
+                    if (candidato < 1) candidato = correcto + offset;
+                    if (!opcionesSet.has(candidato) && candidato > 0) {
+                        opcionesSet.add(candidato);
+                    }
+                    intentos++;
+                }
+                // Si no se completaron, rellenar con valores seguros
+                let fallback = 1;
+                while (opcionesSet.size < NUM_OPCIONES) {
+                    if (!opcionesSet.has(fallback) && fallback !== correcto) {
+                        opcionesSet.add(fallback);
+                    }
+                    fallback++;
+                }
+                // Mezclar
+                const arr = Array.from(opcionesSet);
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            };
+
+            // ─── GENERAR PREGUNTA (con prioridad de repeticiones) ───
             const generarPregunta = useCallback(() => {
                 const claves = Object.keys(repeticiones).filter(k => repeticiones[k] > 0);
                 if (claves.length > 0) {
@@ -771,21 +731,69 @@
                 if (estadoJuego !== 'jugando') return;
 
                 const pregunta = generarPregunta();
-                setMultiplicando(pregunta.multiplicando);
-                setMultiplicador(pregunta.multiplicador);
+                const mult = pregunta.multiplicando;
+                const mult2 = pregunta.multiplicador;
+                const correcto = mult * mult2;
+                const opcs = generarOpciones(correcto);
+
+                setMultiplicando(mult);
+                setMultiplicador(mult2);
+                setOpciones(opcs);
+                setRespuestaSeleccionada(null);
                 setModoRepaso(pregunta.esRepeticion);
-                setTablaRepaso(pregunta.esRepeticion ? pregunta.multiplicando : null);
-                setOpcionSeleccionada(null);
+                setTablaRepaso(pregunta.esRepeticion ? mult : null);
                 setEsperandoSiguiente(false);
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
 
-                const correcta = pregunta.multiplicando * pregunta.multiplicador;
-                const nuevasOpciones = generarOpciones(correcta);
-                setOpciones(nuevasOpciones);
+                // Iniciar temporizador
+                limpiarTimer();
+                setTiempoRestante(TIEMPO_PREGUNTA);
+                timerIntervalRef.current = setInterval(() => {
+                    setTiempoRestante(prev => {
+                        if (prev <= 1) {
+                            clearInterval(timerIntervalRef.current);
+                            timerIntervalRef.current = null;
+                            // Timeout → error
+                            manejarTimeout(mult, mult2);
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            }, [estadoJuego, generarPregunta, limpiarTimer]);
 
-                iniciarTimer();
-            }, [estadoJuego, generarPregunta, iniciarTimer, generarOpciones]);
+            // ─── MANEJAR TIMEOUT ───
+            const manejarTimeout = useCallback((tabla, mult) => {
+                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
+                // Agregar repetición
+                agregarRepeticion(tabla, mult);
+                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
+                setFeedbackAnim(true);
+
+                const nuevosErrores = errores + 1;
+                setErrores(nuevosErrores);
+                if (!modoRepaso) {
+                    setAciertosEnTabla(0);
+                }
+
+                if (nuevosErrores >= MAX_ERRORES) {
+                    setEstadoJuego('gameover');
+                    setEsperandoSiguiente(true);
+                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                    limpiarTimer();
+                    return;
+                }
+
+                // Marcar respuesta como incorrecta para mostrar opciones
+                setRespuestaSeleccionada(-1); // valor especial para indicar timeout
+                // No pasamos a siguiente inmediatamente, dejamos que el feedback se vea y luego cargamos
+                setEsperandoSiguiente(true);
+                limpiarTimer();
+                setTimeout(() => {
+                    cargarNuevaPregunta();
+                }, 1200);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimer, cargarNuevaPregunta]);
 
             // ─── AVANZAR TABLA ───
             const avanzarTabla = useCallback(() => {
@@ -797,22 +805,23 @@
                         tipo: 'success' });
                 } else {
                     setEstadoJuego('victoria');
-                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas! 🏆`,
+                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
                         tipo: 'success' });
                     setEsperandoSiguiente(true);
                     limpiarTimer();
                 }
             }, [tablaActual, limpiarTimer]);
 
-            // ─── MANEJAR SELECCIÓN DE OPCIÓN ───
-            const manejarSeleccion = useCallback((valor) => {
-                if (esperandoSiguiente || estadoJuego !== 'jugando' || opcionSeleccionada !== null) return;
-
+            // ─── PROCESAR RESPUESTA (clic en opción) ───
+            const procesarRespuesta = useCallback((indice) => {
+                if (esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null) return;
+                const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                setOpcionSeleccionada(valor);
                 limpiarTimer();
+
+                setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
 
                 if (esCorrecto) {
@@ -828,18 +837,17 @@
                             nuevasDominadas.add(tablaActual);
                             setTablasDominadas(nuevasDominadas);
                             setEsperandoSiguiente(true);
-                            setTimeout(() => {
-                                avanzarTabla();
-                            }, 600);
+                            avanzarTabla();
                             return;
                         }
                     }
-
+                    // Siguiente inmediata
                     setEsperandoSiguiente(true);
                     setTimeout(() => {
                         cargarNuevaPregunta();
-                    }, 600);
+                    }, 800);
                 } else {
+                    // Error
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
 
@@ -861,16 +869,17 @@
                     setEsperandoSiguiente(true);
                     setTimeout(() => {
                         cargarNuevaPregunta();
-                    }, 800);
+                    }, 1200);
                 }
-            }, [multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
-                tablaActual, modoRepaso, errores, estadoJuego, opcionSeleccionada, limpiarTimer,
-                agregarRepeticion, avanzarTabla, cargarNuevaPregunta
+            }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
+                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimer, agregarRepeticion,
+                avanzarTabla, cargarNuevaPregunta
             ]);
 
             // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
                 limpiarTimer();
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
                 setTablaActual(TABLA_MIN);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
@@ -880,7 +889,7 @@
                 setTablaRepaso(null);
                 setFeedback({ mensaje: '🔄 ¡Reiniciado!', tipo: 'info' });
                 setEsperandoSiguiente(false);
-                setOpcionSeleccionada(null);
+                setRespuestaSeleccionada(null);
                 setEstadoJuego('jugando');
                 setRepeticiones({});
                 setTiempoRestante(TIEMPO_PREGUNTA);
@@ -993,20 +1002,25 @@
                         </div>
 
                         <div className="options-grid">
-                            {opciones.map((opcion, idx) => {
-                                let className = 'option-btn';
-                                if (opcionSeleccionada !== null) {
-                                    if (opcion === multiplicando * multiplicador) className += ' correct';
-                                    else if (opcion === opcionSeleccionada) className += ' wrong';
+                            {opciones.map((valor, idx) => {
+                                let clase = 'option-btn';
+                                const correcto = multiplicando * multiplicador;
+                                if (respuestaSeleccionada !== null) {
+                                    if (idx === respuestaSeleccionada) {
+                                        clase += valor === correcto ? ' correct-answer' : ' wrong-answer';
+                                    } else if (valor === correcto && respuestaSeleccionada !== -1) {
+                                        clase += ' reveal-correct';
+                                    }
                                 }
+                                const disabled = esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null;
                                 return (
                                     <button
                                         key={idx}
-                                        className={className}
-                                        onClick={() => manejarSeleccion(opcion)}
-                                        disabled={opcionSeleccionada !== null || esperandoSiguiente || estadoJuego !== 'jugando' || tiempoRestante === 0}
+                                        className={clase}
+                                        onClick={() => procesarRespuesta(idx)}
+                                        disabled={disabled}
                                     >
-                                        {opcion}
+                                        {valor}
                                     </button>
                                 );
                             })}
