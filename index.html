@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
+        /* ─── ESTILOS (IDÉNTICOS, SIN CAMBIOS) ─── */
         * {
             margin: 0;
             padding: 0;
@@ -252,7 +253,6 @@
             display: inline-block;
         }
 
-        /* ─── OPCIONES MÚLTIPLES ─── */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -638,7 +638,7 @@
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
-            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // índice
+            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // índice o -1 para timeout
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
 
@@ -650,16 +650,19 @@
 
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
             const timerIntervalRef = useRef(null);
+            const loadTimeoutRef = useRef(null); // para el setTimeout de cargar siguiente
 
             const [repeticiones, setRepeticiones] = useState({});
 
-            const timeoutRef = useRef(null);
-
-            // ─── LIMPIAR TEMPORIZADOR ───
-            const limpiarTimer = useCallback(() => {
+            // ─── LIMPIAR TODOS LOS TEMPORIZADORES ───
+            const limpiarTimers = useCallback(() => {
                 if (timerIntervalRef.current) {
                     clearInterval(timerIntervalRef.current);
                     timerIntervalRef.current = null;
+                }
+                if (loadTimeoutRef.current) {
+                    clearTimeout(loadTimeoutRef.current);
+                    loadTimeoutRef.current = null;
                 }
             }, []);
 
@@ -675,13 +678,12 @@
 
             // ─── GENERAR OPCIONES ───
             const generarOpciones = (correcto) => {
-                // Generar 5 números distintos a correcto y entre sí, en un rango razonable (1..200)
                 const opcionesSet = new Set();
                 opcionesSet.add(correcto);
                 let intentos = 0;
                 const maxIntentos = 1000;
                 while (opcionesSet.size < NUM_OPCIONES && intentos < maxIntentos) {
-                    const offset = Math.floor(Math.random() * 20) + 1; // variación
+                    const offset = Math.floor(Math.random() * 20) + 1;
                     const signo = Math.random() < 0.5 ? 1 : -1;
                     let candidato = correcto + signo * offset;
                     if (candidato < 1) candidato = correcto + offset;
@@ -690,7 +692,7 @@
                     }
                     intentos++;
                 }
-                // Si no se completaron, rellenar con valores seguros
+                // Fallback por si no se completaron
                 let fallback = 1;
                 while (opcionesSet.size < NUM_OPCIONES) {
                     if (!opcionesSet.has(fallback) && fallback !== correcto) {
@@ -730,6 +732,8 @@
             const cargarNuevaPregunta = useCallback(() => {
                 if (estadoJuego !== 'jugando') return;
 
+                limpiarTimers(); // limpia cualquier timer pendiente
+
                 const pregunta = generarPregunta();
                 const mult = pregunta.multiplicando;
                 const mult2 = pregunta.multiplicador;
@@ -747,7 +751,6 @@
                 setFeedbackAnim(false);
 
                 // Iniciar temporizador
-                limpiarTimer();
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
@@ -761,7 +764,7 @@
                         return prev - 1;
                     });
                 }, 1000);
-            }, [estadoJuego, generarPregunta, limpiarTimer]);
+            }, [estadoJuego, generarPregunta, limpiarTimers]);
 
             // ─── MANEJAR TIMEOUT ───
             const manejarTimeout = useCallback((tabla, mult) => {
@@ -781,19 +784,18 @@
                     setEstadoJuego('gameover');
                     setEsperandoSiguiente(true);
                     setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
-                    limpiarTimer();
+                    limpiarTimers();
                     return;
                 }
 
-                // Marcar respuesta como incorrecta para mostrar opciones
-                setRespuestaSeleccionada(-1); // valor especial para indicar timeout
-                // No pasamos a siguiente inmediatamente, dejamos que el feedback se vea y luego cargamos
+                // Marcar respuesta como incorrecta (timeout)
+                setRespuestaSeleccionada(-1);
                 setEsperandoSiguiente(true);
-                limpiarTimer();
-                setTimeout(() => {
+                limpiarTimers(); // limpia el intervalo (ya lo está) y cualquier timeout
+                loadTimeoutRef.current = setTimeout(() => {
                     cargarNuevaPregunta();
                 }, 1200);
-            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimer, cargarNuevaPregunta]);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta]);
 
             // ─── AVANZAR TABLA ───
             const avanzarTabla = useCallback(() => {
@@ -808,9 +810,9 @@
                     setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
                         tipo: 'success' });
                     setEsperandoSiguiente(true);
-                    limpiarTimer();
+                    limpiarTimers();
                 }
-            }, [tablaActual, limpiarTimer]);
+            }, [tablaActual, limpiarTimers]);
 
             // ─── PROCESAR RESPUESTA (clic en opción) ───
             const procesarRespuesta = useCallback((indice) => {
@@ -819,7 +821,7 @@
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                limpiarTimer();
+                limpiarTimers(); // detener temporizador
 
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
@@ -843,7 +845,7 @@
                     }
                     // Siguiente inmediata
                     setEsperandoSiguiente(true);
-                    setTimeout(() => {
+                    loadTimeoutRef.current = setTimeout(() => {
                         cargarNuevaPregunta();
                     }, 800);
                 } else {
@@ -867,19 +869,18 @@
                     }
 
                     setEsperandoSiguiente(true);
-                    setTimeout(() => {
+                    loadTimeoutRef.current = setTimeout(() => {
                         cargarNuevaPregunta();
                     }, 1200);
                 }
             }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
-                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimer, agregarRepeticion,
-                avanzarTabla, cargarNuevaPregunta
+                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimers,
+                agregarRepeticion, avanzarTabla, cargarNuevaPregunta
             ]);
 
-            // ─── REINICIAR ───
+            // ─── REINICIAR JUEGO ───
             const reiniciarJuego = useCallback(() => {
-                limpiarTimer();
-                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                limpiarTimers();
                 setTablaActual(TABLA_MIN);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
@@ -894,15 +895,18 @@
                 setRepeticiones({});
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 cargarNuevaPregunta();
-            }, [limpiarTimer, cargarNuevaPregunta]);
+            }, [limpiarTimers, cargarNuevaPregunta]);
 
             // ─── EFECTO INICIAL ───
             useEffect(() => {
                 if (empezado) {
                     cargarNuevaPregunta();
                 }
-            }, [empezado, cargarNuevaPregunta]);
+                // Limpieza al desmontar
+                return () => limpiarTimers();
+            }, [empezado, cargarNuevaPregunta, limpiarTimers]);
 
+            // ─── CÁLCULOS PARA RENDER ───
             const dominadasArray = [...tablasDominadas].sort((a, b) => a - b);
             const masteryPercent = Math.min(100, (aciertosEnTabla / CORRECTAS_PARA_DOMINAR) * 100);
             const vidasRestantes = MAX_ERRORES - errores;
@@ -912,7 +916,6 @@
             else if (tiempoRestante <= 5) timerClass = 'warning';
 
             // ─── RENDER ───
-
             if (!empezado) {
                 return (
                     <div className="game-card welcome">
@@ -1052,7 +1055,7 @@
                         <button
                             className="btn-secondary"
                             onClick={() => {
-                                limpiarTimer();
+                                limpiarTimers();
                                 cargarNuevaPregunta();
                             }}
                             disabled={estadoJuego !== 'jugando'}
