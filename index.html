@@ -14,7 +14,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Quicksand', sans-serif;
             background: linear-gradient(145deg, #f7f0fc 0%, #e8def0 100%);
@@ -24,12 +23,10 @@
             align-items: center;
             padding: 20px;
         }
-
         #root {
             width: 100%;
             max-width: 720px;
         }
-
         .game-card {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
@@ -40,7 +37,6 @@
             text-align: center;
             animation: pop 0.35s ease-out;
         }
-
         @keyframes pop {
             0% {
                 transform: scale(0.9);
@@ -51,7 +47,6 @@
                 opacity: 1;
             }
         }
-
         .header {
             display: flex;
             justify-content: space-between;
@@ -60,7 +55,6 @@
             gap: 8px;
             margin-bottom: 10px;
         }
-
         .game-title {
             font-size: 22px;
             font-weight: 700;
@@ -69,7 +63,6 @@
             align-items: center;
             gap: 8px;
         }
-
         .game-title span {
             background: #f7e9ff;
             padding: 4px 14px;
@@ -78,7 +71,6 @@
             font-weight: 600;
             color: #6a3f7e;
         }
-
         .vidas {
             background: #2d1b3a;
             padding: 6px 18px 6px 14px;
@@ -91,7 +83,6 @@
             gap: 6px;
             box-shadow: 0 4px 0 #1a0f23;
         }
-
         .table-progress {
             background: #ede4f5;
             border-radius: 60px;
@@ -103,7 +94,6 @@
             flex-wrap: wrap;
             gap: 6px;
         }
-
         .table-badge {
             font-size: 26px;
             font-weight: 700;
@@ -114,13 +104,11 @@
             line-height: 44px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
-
         .table-badge small {
             font-size: 16px;
             font-weight: 400;
             color: #7a5a8f;
         }
-
         .mastery-bar {
             display: flex;
             align-items: center;
@@ -128,7 +116,6 @@
             flex: 1;
             min-width: 120px;
         }
-
         .mastery-track {
             flex: 1;
             height: 10px;
@@ -136,7 +123,6 @@
             border-radius: 20px;
             overflow: hidden;
         }
-
         .mastery-fill {
             height: 100%;
             width: 0%;
@@ -144,14 +130,12 @@
             border-radius: 20px;
             transition: width 0.5s ease;
         }
-
         .mastery-label {
             font-size: 14px;
             font-weight: 600;
             color: #4f2f66;
             white-space: nowrap;
         }
-
         .timer-container {
             display: flex;
             align-items: center;
@@ -159,7 +143,6 @@
             gap: 12px;
             margin: 6px 0 12px;
         }
-
         .timer-bar {
             width: 120px;
             height: 10px;
@@ -167,7 +150,6 @@
             border-radius: 20px;
             overflow: hidden;
         }
-
         .timer-fill {
             height: 100%;
             width: 100%;
@@ -175,33 +157,27 @@
             border-radius: 20px;
             transition: width 0.3s linear;
         }
-
         .timer-fill.warning {
             background: #e67e22;
         }
-
         .timer-fill.danger {
             background: #c0392b;
         }
-
         .timer-text {
             font-size: 22px;
             font-weight: 700;
             color: #2d1b3a;
             min-width: 40px;
         }
-
         .hangman-container {
             display: flex;
             justify-content: center;
             margin: 4px 0 8px;
         }
-
         .hangman-svg {
             width: 140px;
             height: 170px;
         }
-
         .hangman-svg line,
         .hangman-svg circle {
             stroke: #2d1b3a;
@@ -210,16 +186,13 @@
             stroke-linejoin: round;
             fill: none;
         }
-
         .hangman-svg .body-part {
             transition: opacity 0.3s ease;
             opacity: 0;
         }
-
         .hangman-svg .body-part.visible {
             opacity: 1;
         }
-
         .question-area {
             background: white;
             border-radius: 48px;
@@ -227,7 +200,6 @@
             margin: 4px 0 16px;
             box-shadow: 0 8px 0 #d8c8e6, inset 0 1px 0 #fff;
         }
-
         .question-text {
             font-size: 38px;
             font-weight: 700;
@@ -238,13 +210,11 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-
         .question-text .sign,
         .question-text .eq {
             color: #a07bb8;
             font-size: 34px;
         }
-
         .question-text .highlight {
             background: #f2e6fc;
             padding: 0 16px;
@@ -252,14 +222,12 @@
             min-width: 50px;
             display: inline-block;
         }
-
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             margin: 18px 0 8px;
         }
-
         .option-btn {
             font-family: 'Quicksand', sans-serif;
             font-size: 26px;
@@ -275,34 +243,28 @@
             text-align: center;
             touch-action: manipulation;
         }
-
         .option-btn:active {
             transform: translateY(4px);
             box-shadow: 0 2px 0 #c5b2d3;
         }
-
         .option-btn:disabled {
             opacity: 0.5;
             transform: translateY(2px);
             box-shadow: 0 3px 0 #c5b2d3;
             pointer-events: none;
         }
-
         .option-btn.correct-answer {
             background: #7dcea0;
             box-shadow: 0 6px 0 #4a8c6a;
         }
-
         .option-btn.wrong-answer {
             background: #f5a0a0;
             box-shadow: 0 6px 0 #b35a5a;
         }
-
         .option-btn.reveal-correct {
             background: #7dcea0;
             box-shadow: 0 6px 0 #4a8c6a;
         }
-
         .feedback {
             margin-top: 14px;
             font-size: 22px;
@@ -314,7 +276,6 @@
             gap: 10px;
             flex-wrap: wrap;
         }
-
         .feedback.correct {
             color: #2a7a4a;
         }
@@ -327,7 +288,6 @@
         .feedback.success {
             color: #1f5f44;
         }
-
         .action-row {
             display: flex;
             gap: 12px;
@@ -335,7 +295,6 @@
             margin-top: 14px;
             flex-wrap: wrap;
         }
-
         .btn-secondary {
             font-family: 'Quicksand', sans-serif;
             font-size: 17px;
@@ -349,24 +308,20 @@
             box-shadow: 0 4px 0 #c5b2d3;
             transition: transform 0.08s, box-shadow 0.08s;
         }
-
         .btn-secondary:active {
             transform: translateY(4px);
             box-shadow: 0 0px 0 #c5b2d3;
         }
-
         .btn-secondary.success {
             background: #c8e6d9;
             color: #1f5f44;
             box-shadow: 0 4px 0 #a8caba;
         }
-
         .btn-secondary.danger {
             background: #f8d8dc;
             color: #8f3545;
             box-shadow: 0 4px 0 #dbb6bc;
         }
-
         .mastered-chips {
             display: flex;
             flex-wrap: wrap;
@@ -374,7 +329,6 @@
             gap: 4px;
             margin: 6px 0 4px;
         }
-
         .mastered-chip {
             background: #c8e6d9;
             color: #1a4f38;
@@ -384,36 +338,30 @@
             border-radius: 30px;
             box-shadow: inset 0 -2px 0 #9ac0ae;
         }
-
         .mastered-chip.review {
             background: #fae8c8;
             color: #7a5a2a;
             box-shadow: inset 0 -2px 0 #dbbf8f;
         }
-
         .welcome {
             padding: 16px 0 8px;
         }
-
         .welcome h1 {
             font-size: 36px;
             font-weight: 700;
             color: #3f1f55;
             margin-bottom: 4px;
         }
-
         .welcome .subtitle {
             font-size: 18px;
             color: #5f3f75;
             margin-bottom: 20px;
         }
-
         .welcome .emoji-big {
             font-size: 64px;
             display: block;
             margin: 6px 0 12px;
         }
-
         .name-input-group {
             display: flex;
             flex-direction: column;
@@ -421,13 +369,11 @@
             gap: 14px;
             margin: 16px 0 10px;
         }
-
         .name-input-group label {
             font-size: 18px;
             font-weight: 600;
             color: #3f2355;
         }
-
         .name-input {
             font-family: 'Quicksand', sans-serif;
             font-size: 22px;
@@ -440,11 +386,9 @@
             outline: none;
             background: white;
         }
-
         .name-input:focus {
             border-color: #9b72bb;
         }
-
         .btn-start {
             font-family: 'Quicksand', sans-serif;
             font-size: 26px;
@@ -458,19 +402,16 @@
             cursor: pointer;
             transition: transform 0.08s, box-shadow 0.08s;
         }
-
         .btn-start:active {
             transform: translateY(5px);
             box-shadow: 0 3px 0 #462e5a;
         }
-
         .btn-start:disabled {
             opacity: 0.5;
             transform: translateY(4px);
             box-shadow: 0 4px 0 #462e5a;
             pointer-events: none;
         }
-
         .game-over-overlay {
             margin-top: 12px;
             padding: 16px;
@@ -478,27 +419,94 @@
             border-radius: 40px;
             border: 2px solid #b13e4b;
         }
-
         .game-over-overlay h2 {
             font-size: 32px;
             color: #8f3545;
             margin-bottom: 4px;
         }
-
         .game-over-overlay .sub {
             font-size: 18px;
             color: #5f3f75;
         }
-
         .win-overlay {
             background: #d4f0e6;
             border: 2px solid #1f5f44;
         }
-
         .win-overlay h2 {
             color: #1f5f44;
         }
-
+        .records-container {
+            background: #ede4f5;
+            border-radius: 40px;
+            padding: 12px 16px;
+            margin: 14px 0 8px;
+            text-align: left;
+        }
+        .records-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #3f1f55;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 30px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3f2355;
+        }
+        .record-item:last-child {
+            margin-bottom: 0;
+        }
+        .record-medal {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+        .record-name {
+            flex: 1;
+        }
+        .record-tabla {
+            background: #f7e9ff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #6a3f7e;
+        }
+        .progress-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-progress {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 16px;
+            border: none;
+            border-radius: 40px;
+            background: #d4c0e2;
+            color: #3f2355;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #b5a7c9;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+        .btn-progress:active {
+            transform: translateY(3px);
+            box-shadow: 0 0px 0 #b5a7c9;
+        }
+        .btn-progress.primary {
+            background: #6f3f92;
+            color: white;
+            box-shadow: 0 3px 0 #462e5a;
+        }
         @media (max-width: 480px) {
             .game-card {
                 padding: 16px 12px 24px;
@@ -540,7 +548,6 @@
                 width: 80px;
             }
         }
-
         .shake {
             animation: shake 0.3s ease;
         }
@@ -556,7 +563,6 @@
                 transform: translateX(8px);
             }
         }
-
         .bounce-in {
             animation: bounceIn 0.4s ease;
         }
@@ -576,19 +582,15 @@
     </style>
 </head>
 <body>
-
     <div id="root"></div>
-
     <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.20/babel.min.js">
     </script>
-
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
-
         const TABLA_MIN = 2;
         const TABLA_MAX = 15;
         const MAX_MULTIPLICADOR = 10;
@@ -596,6 +598,59 @@
         const MAX_ERRORES = 7;
         const TIEMPO_PREGUNTA = 8;
         const NUM_OPCIONES = 6;
+
+        // ─── FUNCIONES DE LOCALSTORAGE ───
+        const obtenerRecords = () => {
+            try {
+                const records = localStorage.getItem('ahorcadoRecords');
+                return records ? JSON.parse(records) : [];
+            } catch {
+                return [];
+            }
+        };
+
+        const guardarRecords = (records) => {
+            try {
+                localStorage.setItem('ahorcadoRecords', JSON.stringify(records));
+            } catch {
+                console.error('No se pudo guardar los records');
+            }
+        };
+
+        const obtenerTablaProgress = (nombre) => {
+            try {
+                const key = `ahorcadoProgress-${nombre}`;
+                const progress = localStorage.getItem(key);
+                return progress ? parseInt(progress, 10) : TABLA_MIN;
+            } catch {
+                return TABLA_MIN;
+            }
+        };
+
+        const guardarTablaProgress = (nombre, tabla) => {
+            try {
+                if (tabla >= 10) {
+                    const key = `ahorcadoProgress-${nombre}`;
+                    localStorage.setItem(key, tabla.toString());
+                }
+            } catch {
+                console.error('No se pudo guardar el progreso');
+            }
+        };
+
+        const agregarRecord = (nombre, tablaAlcanzada, preguntas) => {
+            const records = obtenerRecords();
+            const nuevoRecord = {
+                nombre,
+                tablaAlcanzada,
+                preguntas,
+                fecha: new Date().toLocaleDateString('es-ES')
+            };
+            records.push(nuevoRecord);
+            records.sort((a, b) => b.tablaAlcanzada - a.tablaAlcanzada || b.preguntas - a.preguntas);
+            const top3 = records.slice(0, 3);
+            guardarRecords(top3);
+        };
 
         // ─── COMPONENTE AHORCADO SVG ───
         function Hangman({ errores }) {
@@ -629,31 +684,35 @@
         function App() {
             const [nombre, setNombre] = useState('');
             const [empezado, setEmpezado] = useState(false);
-
             const [tablaActual, setTablaActual] = useState(TABLA_MIN);
+            const [tablaInicial, setTablaInicial] = useState(TABLA_MIN);
+            const [usarProgreso, setUsarProgreso] = useState(false);
+            const [tablaProgressDisponible, setTablaProgressDisponible] = useState(TABLA_MIN);
             const [aciertosEnTabla, setAciertosEnTabla] = useState(0);
             const [tablasDominadas, setTablasDominadas] = useState(new Set());
             const [errores, setErrores] = useState(0);
-
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
             const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
-
             const [esperandoSiguiente, setEsperandoSiguiente] = useState(false);
             const [contadorPreguntas, setContadorPreguntas] = useState(0);
             const [modoRepaso, setModoRepaso] = useState(false);
             const [tablaRepaso, setTablaRepaso] = useState(null);
             const [estadoJuego, setEstadoJuego] = useState('jugando');
-
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
             const timerIntervalRef = useRef(null);
             const loadTimeoutRef = useRef(null);
-            const timeoutActivoRef = useRef(false); // evita ejecutar timeout múltiple
-
+            const timeoutActivoRef = useRef(false);
             const [repeticiones, setRepeticiones] = useState({});
+            const [records, setRecords] = useState([]);
+
+            // ─── CARGAR RECORDS AL INICIO ───
+            useEffect(() => {
+                setRecords(obtenerRecords());
+            }, []);
 
             // ─── LIMPIAR TODOS LOS TEMPORIZADORES ───
             const limpiarTimers = useCallback(() => {
@@ -731,16 +790,13 @@
             // ─── CARGAR NUEVA PREGUNTA ───
             const cargarNuevaPregunta = useCallback(() => {
                 if (estadoJuego !== 'jugando') return;
-
                 limpiarTimers();
-                timeoutActivoRef.current = false; // reset
-
+                timeoutActivoRef.current = false;
                 const pregunta = generarPregunta();
                 const mult = pregunta.multiplicando;
                 const mult2 = pregunta.multiplicador;
                 const correcto = mult * mult2;
                 const opcs = generarOpciones(correcto);
-
                 setMultiplicando(mult);
                 setMultiplicador(mult2);
                 setOpciones(opcs);
@@ -750,14 +806,12 @@
                 setEsperandoSiguiente(false);
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
-
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
                         if (prev <= 1) {
                             clearInterval(timerIntervalRef.current);
                             timerIntervalRef.current = null;
-                            // Solo ejecutar si no hay un timeout en progreso
                             if (!timeoutActivoRef.current) {
                                 manejarTimeout(mult, mult2);
                             }
@@ -771,28 +825,26 @@
             // ─── MANEJAR TIMEOUT ───
             const manejarTimeout = useCallback((tabla, mult) => {
                 if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
-                if (timeoutActivoRef.current) return; // ya se está procesando
+                if (timeoutActivoRef.current) return;
                 timeoutActivoRef.current = true;
-
                 agregarRepeticion(tabla, mult);
                 setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
                 setFeedbackAnim(true);
-
                 const nuevosErrores = errores + 1;
                 setErrores(nuevosErrores);
                 if (!modoRepaso) {
                     setAciertosEnTabla(0);
                 }
-
                 if (nuevosErrores >= MAX_ERRORES) {
                     setEstadoJuego('gameover');
                     setEsperandoSiguiente(true);
                     setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
                     limpiarTimers();
                     timeoutActivoRef.current = false;
+                    agregarRecord(nombre, tablaActual - 1, contadorPreguntas);
+                    guardarTablaProgress(nombre, tablaActual - 1);
                     return;
                 }
-
                 setRespuestaSeleccionada(-1);
                 setEsperandoSiguiente(true);
                 limpiarTimers();
@@ -800,7 +852,7 @@
                     timeoutActivoRef.current = false;
                     cargarNuevaPregunta();
                 }, 1200);
-            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta]);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers, cargarNuevaPregunta, contadorPreguntas, nombre, tablaActual]);
 
             // ─── AVANZAR TABLA ───
             const avanzarTabla = useCallback(() => {
@@ -812,13 +864,15 @@
                         tipo: 'success' });
                 } else {
                     setEstadoJuego('victoria');
-                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
+                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${tablaInicial} al ${TABLA_MAX}! 🏆`,
                         tipo: 'success' });
                     setEsperandoSiguiente(true);
                     limpiarTimers();
                     timeoutActivoRef.current = false;
+                    agregarRecord(nombre, TABLA_MAX, contadorPreguntas);
+                    guardarTablaProgress(nombre, TABLA_MAX);
                 }
-            }, [tablaActual, limpiarTimers]);
+            }, [tablaActual, limpiarTimers, contadorPreguntas, nombre, tablaInicial]);
 
             // ─── PROCESAR RESPUESTA ───
             const procesarRespuesta = useCallback((indice) => {
@@ -826,18 +880,14 @@
                 const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
-
                 limpiarTimers();
                 timeoutActivoRef.current = false;
-
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
-
                 if (esCorrecto) {
                     setFeedback({ mensaje: `✅ ¡Muy bien! ${multiplicando} × ${multiplicador} = ${correcto}`,
                     tipo: 'correct' });
                     setFeedbackAnim(true);
-
                     if (!modoRepaso) {
                         const nuevosAciertos = aciertosEnTabla + 1;
                         setAciertosEnTabla(nuevosAciertos);
@@ -857,22 +907,20 @@
                 } else {
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
-
                     agregarRepeticion(multiplicando, multiplicador);
-
                     const nuevosErrores = errores + 1;
                     setErrores(nuevosErrores);
                     if (!modoRepaso) {
                         setAciertosEnTabla(0);
                     }
-
                     if (nuevosErrores >= MAX_ERRORES) {
                         setEstadoJuego('gameover');
                         setEsperandoSiguiente(true);
                         setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                        agregarRecord(nombre, tablaActual - 1, contadorPreguntas + 1);
+                        guardarTablaProgress(nombre, tablaActual - 1);
                         return;
                     }
-
                     setEsperandoSiguiente(true);
                     loadTimeoutRef.current = setTimeout(() => {
                         cargarNuevaPregunta();
@@ -880,14 +928,14 @@
                 }
             }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
                 tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimers,
-                agregarRepeticion, avanzarTabla, cargarNuevaPregunta
+                agregarRepeticion, avanzarTabla, cargarNuevaPregunta, nombre, contadorPreguntas
             ]);
 
             // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
                 limpiarTimers();
                 timeoutActivoRef.current = false;
-                setTablaActual(TABLA_MIN);
+                setTablaActual(tablaInicial);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
                 setErrores(0);
@@ -901,7 +949,7 @@
                 setRepeticiones({});
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 cargarNuevaPregunta();
-            }, [limpiarTimers, cargarNuevaPregunta]);
+            }, [limpiarTimers, cargarNuevaPregunta, tablaInicial]);
 
             // ─── EFECTO INICIAL ───
             useEffect(() => {
@@ -911,10 +959,32 @@
                 return () => limpiarTimers();
             }, [empezado, cargarNuevaPregunta, limpiarTimers]);
 
+            // ─── MANEJAR INICIO CON PROGRESO ───
+            const manejarEmpezar = (conProgreso = false) => {
+                if (!nombre.trim()) return;
+                const tablaProgress = obtenerTablaProgress(nombre);
+                if (conProgreso && tablaProgress >= 10) {
+                    setTablaInicial(tablaProgress);
+                    setTablaActual(tablaProgress);
+                } else {
+                    setTablaInicial(TABLA_MIN);
+                    setTablaActual(TABLA_MIN);
+                }
+                setEmpezado(true);
+            };
+
+            // ─── DETECTAR SI HAY PROGRESO DISPONIBLE ───
+            useEffect(() => {
+                if (nombre.trim()) {
+                    const progress = obtenerTablaProgress(nombre);
+                    setTablaProgressDisponible(progress);
+                    setUsarProgreso(progress >= 10);
+                }
+            }, [nombre]);
+
             const dominadasArray = [...tablasDominadas].sort((a, b) => a - b);
             const masteryPercent = Math.min(100, (aciertosEnTabla / CORRECTAS_PARA_DOMINAR) * 100);
             const vidasRestantes = MAX_ERRORES - errores;
-
             let timerClass = '';
             if (tiempoRestante <= 3) timerClass = 'danger';
             else if (tiempoRestante <= 5) timerClass = 'warning';
@@ -935,17 +1005,41 @@
                                 value={nombre}
                                 onChange={(e) => setNombre(e.target.value)}
                                 placeholder="Escribe tu nombre..."
-                                onKeyDown={(e) => { if (e.key === 'Enter' && nombre.trim()) setEmpezado(true); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' && nombre.trim()) manejarEmpezar(!usarProgreso ? false : false); }}
                                 autoFocus
                             />
-                            <button
-                                className="btn-start"
-                                onClick={() => { if (nombre.trim()) setEmpezado(true); }}
-                                disabled={!nombre.trim()}
-                            >
-                                🚀 ¡Jugar!
-                            </button>
+                            <div className="progress-buttons">
+                                <button
+                                    className="btn-start"
+                                    onClick={() => manejarEmpezar(false)}
+                                    disabled={!nombre.trim()}
+                                >
+                                    🚀 Nuevo Juego
+                                </button>
+                                {usarProgreso && (
+                                    <button
+                                        className="btn-progress primary"
+                                        onClick={() => manejarEmpezar(true)}
+                                    >
+                                        ⏭ Continuar desde tabla {tablaProgressDisponible}
+                                    </button>
+                                )}
+                            </div>
                         </div>
+                        {records.length > 0 && (
+                            <div className="records-container">
+                                <div className="records-title">🏆 TOP 3 MEJORES RECORDS</div>
+                                {records.map((record, idx) => (
+                                    <div key={idx} className="record-item">
+                                        <span className="record-medal">
+                                            {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                                        </span>
+                                        <span className="record-name">{record.nombre}</span>
+                                        <span className="record-tabla">Tabla {record.tablaAlcanzada}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <div style={{ marginTop: 16, fontSize: 14, color: '#7a5a8f' }}>
                             ⏱️ Contesta antes de que se acabe el tiempo.<br />
                             ❌ Cada fallo añade una parte del ahorcado (7 errores = pierdes).<br />
@@ -966,7 +1060,6 @@
                             ❤️ {vidasRestantes} / {MAX_ERRORES}
                         </div>
                     </div>
-
                     <div className="table-progress">
                         <div className="table-badge">
                             {tablaActual} <small>×</small>
@@ -978,7 +1071,6 @@
                             <span className="mastery-label">{Math.round(masteryPercent)}%</span>
                         </div>
                     </div>
-
                     {dominadasArray.length > 0 && (
                         <div className="mastered-chips">
                             {dominadasArray.map(t => (
@@ -989,16 +1081,13 @@
                             )}
                         </div>
                     )}
-
                     <div className="timer-container">
                         <div className="timer-bar">
                             <div className={`timer-fill ${timerClass}`} style={{ width: `${(tiempoRestante / TIEMPO_PREGUNTA) * 100}%` }} />
                         </div>
                         <span className="timer-text">{tiempoRestante}s</span>
                     </div>
-
                     <Hangman errores={errores} />
-
                     <div className="question-area">
                         <div className="question-text">
                             <span className="highlight">{multiplicando}</span>
@@ -1007,7 +1096,6 @@
                             <span className="eq">=</span>
                             <span style={{ minWidth: 50, display: 'inline-block', color: '#aa88c4' }}>?</span>
                         </div>
-
                         <div className="options-grid">
                             {opciones.map((valor, idx) => {
                                 let clase = 'option-btn';
@@ -1032,26 +1120,23 @@
                                 );
                             })}
                         </div>
-
                         <div className={`feedback ${feedback.tipo} ${feedbackAnim ? 'bounce-in' : ''}`}>
                             {feedback.mensaje}
                         </div>
                     </div>
-
                     {(estadoJuego === 'gameover' || estadoJuego === 'victoria') && (
                         <div className={`game-over-overlay ${estadoJuego === 'victoria' ? 'win-overlay' : ''}`}>
                             <h2>{estadoJuego === 'gameover' ? '💀 ¡Game Over!' : '🎉 ¡Ganaste!'}</h2>
                             <p className="sub">
                                 {estadoJuego === 'gameover'
                                     ? `Has cometido ${errores} errores. ¡Ánimo, inténtalo de nuevo!`
-                                    : `¡Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! Eres una campeona.`}
+                                    : `¡Dominaste todas las tablas del ${tablaInicial} al ${TABLA_MAX}! Eres una campeona.`}
                             </p>
                             <button className="btn-secondary success" onClick={reiniciarJuego} style={{ marginTop: 12 }}>
                                 🔄 Volver a jugar
                             </button>
                         </div>
                     )}
-
                     <div className="action-row">
                         <button className="btn-secondary" onClick={reiniciarJuego}>
                             🔄 Reiniciar
@@ -1068,7 +1153,6 @@
                             ⏭ Siguiente
                         </button>
                     </div>
-
                     <div style={{ marginTop: 14, fontSize: 13, color: '#9a80ab' }}>
                         👧 {nombre} · {dominadasArray.length} tablas dominadas · {contadorPreguntas} preguntas
                     </div>
