@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
-        /* ===== ESTILOS COMPLETOS (MISMO QUE LA VERSIÓN ORIGINAL) ===== */
+        /* ===== ESTILOS COMPLETOS (MISMO QUE ANTES) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -152,7 +152,6 @@
             white-space: nowrap;
         }
 
-        /* ─── TEMPORIZADOR ─── */
         .timer-container {
             display: flex;
             align-items: center;
@@ -192,7 +191,6 @@
             min-width: 40px;
         }
 
-        /* ─── AHORCADO SVG ─── */
         .hangman-container {
             display: flex;
             justify-content: center;
@@ -222,7 +220,6 @@
             opacity: 1;
         }
 
-        /* ─── PREGUNTA ─── */
         .question-area {
             background: white;
             border-radius: 48px;
@@ -256,7 +253,6 @@
             display: inline-block;
         }
 
-        /* ─── OPCIONES MÚLTIPLES (con el mismo estilo que los botones de acción) ─── */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -395,7 +391,6 @@
             box-shadow: inset 0 -2px 0 #dbbf8f;
         }
 
-        /* ─── PANTALLA DE INICIO ─── */
         .welcome {
             padding: 16px 0 8px;
         }
@@ -476,7 +471,6 @@
             pointer-events: none;
         }
 
-        /* ─── GAME OVER / VICTORIA ─── */
         .game-over-overlay {
             margin-top: 12px;
             padding: 16px;
@@ -505,7 +499,6 @@
             color: #1f5f44;
         }
 
-        /* ─── RESPONSIVE ─── */
         @media (max-width: 480px) {
             .game-card {
                 padding: 16px 12px 24px;
@@ -645,7 +638,7 @@
             const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
-            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // null, índice, o -1 (timeout)
+            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
 
@@ -656,18 +649,27 @@
             const [estadoJuego, setEstadoJuego] = useState('jugando');
 
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
-            const timerIntervalRef = useRef(null);
-
             const [repeticiones, setRepeticiones] = useState({});
+
+            // Refs para controlar temporizadores
+            const timerIntervalRef = useRef(null);
+            const timerTimeoutRef = useRef(null);
+            const timeoutHandledRef = useRef(false);
+            const currentQuestionRef = useRef({ mult: 2, mult2: 1 });
 
             const timeoutRef = useRef(null);
 
-            // ─── LIMPIAR TEMPORIZADOR ───
-            const limpiarTimer = useCallback(() => {
+            // ─── LIMPIAR TEMPORIZADORES ───
+            const limpiarTimers = useCallback(() => {
                 if (timerIntervalRef.current) {
                     clearInterval(timerIntervalRef.current);
                     timerIntervalRef.current = null;
                 }
+                if (timerTimeoutRef.current) {
+                    clearTimeout(timerTimeoutRef.current);
+                    timerTimeoutRef.current = null;
+                }
+                timeoutHandledRef.current = false;
             }, []);
 
             // ─── AGREGAR REPETICIÓN ───
@@ -730,9 +732,51 @@
                 }
             }, [repeticiones, tablaActual]);
 
+            // ─── MANEJAR TIMEOUT (se ejecuta cuando se acaba el tiempo) ───
+            const manejarTimeout = useCallback((tabla, mult) => {
+                if (timeoutHandledRef.current) return;
+                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
+
+                timeoutHandledRef.current = true;
+                limpiarTimers();
+
+                // Agregar repetición
+                agregarRepeticion(tabla, mult);
+
+                const correcto = tabla * mult;
+                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${correcto}`, tipo: 'wrong' });
+                setFeedbackAnim(true);
+
+                // Consumir corazón
+                const nuevosErrores = errores + 1;
+                setErrores(nuevosErrores);
+                if (!modoRepaso) {
+                    setAciertosEnTabla(0);
+                }
+
+                // Resaltar la respuesta correcta
+                setRespuestaSeleccionada(-1);
+
+                if (nuevosErrores >= MAX_ERRORES) {
+                    setEstadoJuego('gameover');
+                    setEsperandoSiguiente(true);
+                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                    return;
+                }
+
+                // Bloquear y pasar a siguiente después de 1.2s
+                setEsperandoSiguiente(true);
+                setTimeout(() => {
+                    cargarNuevaPregunta();
+                }, 1200);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimers]);
+
             // ─── CARGAR NUEVA PREGUNTA ───
             const cargarNuevaPregunta = useCallback(() => {
                 if (estadoJuego !== 'jugando') return;
+
+                limpiarTimers();
+                timeoutHandledRef.current = false;
 
                 const pregunta = generarPregunta();
                 const mult = pregunta.multiplicando;
@@ -750,53 +794,30 @@
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
 
-                limpiarTimer();
+                // Guardar referencia de la pregunta actual para el timeout
+                currentQuestionRef.current = { mult, mult2 };
+
+                // Iniciar temporizador
                 setTiempoRestante(TIEMPO_PREGUNTA);
+
+                // Intervalo para actualizar la barra cada segundo
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
                         if (prev <= 1) {
-                            clearInterval(timerIntervalRef.current);
-                            timerIntervalRef.current = null;
-                            manejarTimeout(mult, mult2);
+                            // No hacemos nada aquí, el timeout principal se encarga
                             return 0;
                         }
                         return prev - 1;
                     });
                 }, 1000);
-            }, [estadoJuego, generarPregunta, limpiarTimer]);
 
-            // ─── MANEJAR TIMEOUT ───
-            const manejarTimeout = useCallback((tabla, mult) => {
-                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
+                // Timeout principal que dispara el error
+                timerTimeoutRef.current = setTimeout(() => {
+                    const { mult: m, mult2: m2 } = currentQuestionRef.current;
+                    manejarTimeout(m, m2);
+                }, TIEMPO_PREGUNTA * 1000);
 
-                agregarRepeticion(tabla, mult);
-                const correcto = tabla * mult;
-                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${correcto}`, tipo: 'wrong' });
-                setFeedbackAnim(true);
-
-                const nuevosErrores = errores + 1;
-                setErrores(nuevosErrores);
-                if (!modoRepaso) {
-                    setAciertosEnTabla(0);
-                }
-
-                // Resaltar la respuesta correcta (sin seleccionar ninguna opción como incorrecta)
-                setRespuestaSeleccionada(-1);
-
-                if (nuevosErrores >= MAX_ERRORES) {
-                    setEstadoJuego('gameover');
-                    setEsperandoSiguiente(true);
-                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
-                    limpiarTimer();
-                    return;
-                }
-
-                setEsperandoSiguiente(true);
-                limpiarTimer();
-                setTimeout(() => {
-                    cargarNuevaPregunta();
-                }, 1200);
-            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimer, cargarNuevaPregunta]);
+            }, [estadoJuego, generarPregunta, limpiarTimers, manejarTimeout]);
 
             // ─── AVANZAR TABLA ───
             const avanzarTabla = useCallback(() => {
@@ -811,18 +832,21 @@
                     setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
                         tipo: 'success' });
                     setEsperandoSiguiente(true);
-                    limpiarTimer();
+                    limpiarTimers();
                 }
-            }, [tablaActual, limpiarTimer]);
+            }, [tablaActual, limpiarTimers]);
 
-            // ─── PROCESAR RESPUESTA ───
+            // ─── PROCESAR RESPUESTA (clic en opción) ───
             const procesarRespuesta = useCallback((indice) => {
                 if (esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null) return;
                 const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                limpiarTimer();
+                // Detener todos los temporizadores
+                limpiarTimers();
+                timeoutHandledRef.current = true;
+
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
 
@@ -872,14 +896,15 @@
                     }, 1200);
                 }
             }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
-                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimer, agregarRepeticion,
+                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimers, agregarRepeticion,
                 avanzarTabla, cargarNuevaPregunta
             ]);
 
             // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
-                limpiarTimer();
+                limpiarTimers();
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                timeoutHandledRef.current = false;
                 setTablaActual(TABLA_MIN);
                 setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
@@ -894,7 +919,7 @@
                 setRepeticiones({});
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 cargarNuevaPregunta();
-            }, [limpiarTimer, cargarNuevaPregunta]);
+            }, [limpiarTimers, cargarNuevaPregunta]);
 
             // ─── EFECTO INICIAL ───
             useEffect(() => {
@@ -992,7 +1017,7 @@
                                 const correcto = multiplicando * multiplicador;
                                 if (respuestaSeleccionada !== null) {
                                     if (respuestaSeleccionada === -1) {
-                                        // Timeout: resaltar solo la correcta en verde
+                                        // Timeout: solo resaltar la correcta
                                         if (valor === correcto) clase += ' reveal-correct';
                                     } else {
                                         if (idx === respuestaSeleccionada) {
@@ -1030,7 +1055,7 @@
 
                     <div className="action-row">
                         <button className="btn-secondary" onClick={reiniciarJuego}>🔄 Reiniciar</button>
-                        <button className="btn-secondary" onClick={() => { limpiarTimer(); cargarNuevaPregunta(); }} disabled={estadoJuego !== 'jugando'}>⏭ Siguiente</button>
+                        <button className="btn-secondary" onClick={() => { limpiarTimers(); cargarNuevaPregunta(); }} disabled={estadoJuego !== 'jugando'}>⏭ Siguiente</button>
                     </div>
 
                     <div style={{ marginTop: 14, fontSize: 13, color: '#9a80ab' }}>
