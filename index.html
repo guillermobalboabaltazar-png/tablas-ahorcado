@@ -576,6 +576,27 @@
         .pwa-badge:hover {
             background: #5a2f7a;
         }
+        .btn-delete-records {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border: none;
+            border-radius: 30px;
+            background: #f8d8dc;
+            color: #8f3545;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #dbb6bc;
+            transition: transform 0.08s, box-shadow 0.08s;
+            margin-top: 8px;
+        }
+        .btn-delete-records:hover {
+            background: #f0b5be;
+        }
+        .btn-delete-records:active {
+            transform: translateY(2px);
+            box-shadow: 0 0px 0 #dbb6bc;
+        }
         @keyframes slideUp {
             from {
                 transform: translateY(100px);
@@ -743,6 +764,18 @@
             records.sort((a, b) => b.score - a.score || b.tablaAlcanzada - a.tablaAlcanzada);
             const top3 = records.slice(0, 3);
             guardarRecords(top3);
+        };
+
+        const borrarTodosLosRecords = () => {
+            if (window.confirm('⚠️ ¿Estás seguro que quieres borrar TODOS los records? Esta acción no se puede deshacer.')) {
+                try {
+                    localStorage.removeItem('ahorcadoRecords');
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Error al borrar records:', err);
+                    alert('Error al borrar los records');
+                }
+            }
         };
 
         // ─── COMPONENTE AHORCADO SVG ───
@@ -1182,6 +1215,12 @@
                                         </div>
                                     </div>
                                 ))}
+                                <button
+                                    className="btn-delete-records"
+                                    onClick={borrarTodosLosRecords}
+                                >
+                                    🗑️ Borrar todos los records
+                                </button>
                             </div>
                         )}
                         <div style={{ marginTop: 16, fontSize: 14, color: '#7a5a8f' }}>
