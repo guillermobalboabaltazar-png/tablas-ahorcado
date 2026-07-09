@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>⏳ Ahorcado de Tablas con Tiempo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(145deg, #f7f0fc 0%, #e8def0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 720px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 60px 60px 40px 40px;
+            box-shadow: 0 20px 60px rgba(120, 80, 150, 0.25);
+            padding: 28px 24px 36px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            text-align: center;
+            animation: pop 0.35s ease-out;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .game-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #4a2a5e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .game-title span {
+            background: #f7e9ff;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6a3f7e;
+        }
+
+        .vidas {
+            background: #2d1b3a;
+            padding: 6px 18px 6px 14px;
+            border-radius: 40px;
+            color: #feda7a;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 0 #1a0f23;
+        }
+
+        .table-progress {
+            background: #ede4f5;
+            border-radius: 60px;
+            padding: 10px 18px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .table-badge {
+            font-size: 26px;
+            font-weight: 700;
+            color: #3f1f55;
+            background: white;
+            padding: 0 18px;
+            border-radius: 40px;
+            line-height: 44px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .table-badge small {
+            font-size: 16px;
+            font-weight: 400;
+            color: #7a5a8f;
+        }
+
+        .mastery-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .mastery-track {
+            flex: 1;
+            height: 10px;
+            background: #d4c0e2;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .mastery-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #b388d4, #7c4d9e);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        .mastery-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4f2f66;
+            white-space: nowrap;
+        }
+
+        /* ─── TEMPORIZADOR ─── */
+        .timer-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 6px 0 12px;
+        }
+
+        .timer-bar {
+            width: 120px;
+            height: 10px;
+            background: #d4c0e2;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            width: 100%;
+            background: #6f3f92;
+            border-radius: 20px;
+            transition: width 0.3s linear;
+        }
+
+        .timer-fill.warning {
+            background: #e67e22;
+        }
+
+        .timer-fill.danger {
+            background: #c0392b;
+        }
+
+        .timer-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d1b3a;
+            min-width: 40px;
+        }
+
+        /* ─── AHORCADO SVG ─── */
+        .hangman-container {
+            display: flex;
+            justify-content: center;
+            margin: 4px 0 8px;
+        }
+
+        .hangman-svg {
+            width: 140px;
+            height: 170px;
+        }
+
+        .hangman-svg line,
+        .hangman-svg circle {
+            stroke: #2d1b3a;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .hangman-svg .body-part {
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .hangman-svg .body-part.visible {
+            opacity: 1;
+        }
+
+        .question-area {
+            background: white;
+            border-radius: 48px;
+            padding: 22px 16px 20px;
+            margin: 4px 0 16px;
+            box-shadow: 0 8px 0 #d8c8e6, inset 0 1px 0 #fff;
+        }
+
+        .question-text {
+            font-size: 38px;
+            font-weight: 700;
+            color: #261a30;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .question-text .sign,
+        .question-text .eq {
+            color: #a07bb8;
+            font-size: 34px;
+        }
+
+        .question-text .highlight {
+            background: #f2e6fc;
+            padding: 0 16px;
+            border-radius: 20px;
+            min-width: 50px;
+            display: inline-block;
+        }
+
+        .answer-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .answer-input {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 28px;
+            font-weight: 600;
+            padding: 6px 16px;
+            width: 120px;
+            border: 3px solid #d4c0e2;
+            border-radius: 40px;
+            text-align: center;
+            outline: none;
+            background: #faf7fc;
+            color: #261a30;
+        }
+
+        .answer-input:focus {
+            border-color: #9b72bb;
+            box-shadow: 0 0 0 4px rgba(155, 114, 187, 0.2);
+        }
+
+        .answer-input:disabled {
+            opacity: 0.6;
+        }
+
+        .btn-submit {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            padding: 6px 28px;
+            border: none;
+            border-radius: 40px;
+            background: #6f3f92;
+            color: white;
+            box-shadow: 0 6px 0 #462e5a;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .btn-submit:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #462e5a;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 #462e5a;
+            pointer-events: none;
+        }
+
+        .feedback {
+            margin-top: 14px;
+            font-size: 22px;
+            font-weight: 700;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .feedback.correct {
+            color: #2a7a4a;
+        }
+        .feedback.wrong {
+            color: #b13e4b;
+        }
+        .feedback.info {
+            color: #5f3f75;
+        }
+        .feedback.success {
+            color: #1f5f44;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 8px 22px;
+            border: none;
+            border-radius: 40px;
+            background: #e6d8f0;
+            color: #3f2355;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #c5b2d3;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #c5b2d3;
+        }
+
+        .btn-secondary.success {
+            background: #c8e6d9;
+            color: #1f5f44;
+            box-shadow: 0 4px 0 #a8caba;
+        }
+
+        .btn-secondary.danger {
+            background: #f8d8dc;
+            color: #8f3545;
+            box-shadow: 0 4px 0 #dbb6bc;
+        }
+
+        .mastered-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            margin: 6px 0 4px;
+        }
+
+        .mastered-chip {
+            background: #c8e6d9;
+            color: #1a4f38;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 2px 12px;
+            border-radius: 30px;
+            box-shadow: inset 0 -2px 0 #9ac0ae;
+        }
+
+        .mastered-chip.review {
+            background: #fae8c8;
+            color: #7a5a2a;
+            box-shadow: inset 0 -2px 0 #dbbf8f;
+        }
+
+        .welcome {
+            padding: 16px 0 8px;
+        }
+
+        .welcome h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #3f1f55;
+            margin-bottom: 4px;
+        }
+
+        .welcome .subtitle {
+            font-size: 18px;
+            color: #5f3f75;
+            margin-bottom: 20px;
+        }
+
+        .welcome .emoji-big {
+            font-size: 64px;
+            display: block;
+            margin: 6px 0 12px;
+        }
+
+        .name-input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin: 16px 0 10px;
+        }
+
+        .name-input-group label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3f2355;
+        }
+
+        .name-input {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 22px;
+            padding: 10px 20px;
+            border: 3px solid #d4c0e2;
+            border-radius: 60px;
+            width: 80%;
+            max-width: 260px;
+            text-align: center;
+            outline: none;
+            background: white;
+        }
+
+        .name-input:focus {
+            border-color: #9b72bb;
+        }
+
+        .btn-start {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            padding: 12px 44px;
+            border: none;
+            border-radius: 60px;
+            background: #6f3f92;
+            color: white;
+            box-shadow: 0 8px 0 #462e5a;
+            cursor: pointer;
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+
+        .btn-start:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #462e5a;
+        }
+
+        .btn-start:disabled {
+            opacity: 0.5;
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #462e5a;
+            pointer-events: none;
+        }
+
+        .game-over-overlay {
+            margin-top: 12px;
+            padding: 16px;
+            background: #fce8ea;
+            border-radius: 40px;
+            border: 2px solid #b13e4b;
+        }
+
+        .game-over-overlay h2 {
+            font-size: 32px;
+            color: #8f3545;
+            margin-bottom: 4px;
+        }
+
+        .game-over-overlay .sub {
+            font-size: 18px;
+            color: #5f3f75;
+        }
+
+        .win-overlay {
+            background: #d4f0e6;
+            border: 2px solid #1f5f44;
+        }
+
+        .win-overlay h2 {
+            color: #1f5f44;
+        }
+
+        @media (max-width: 480px) {
+            .game-card {
+                padding: 16px 12px 24px;
+            }
+            .question-text {
+                font-size: 30px;
+            }
+            .question-text .sign,
+            .question-text .eq {
+                font-size: 26px;
+            }
+            .answer-input {
+                font-size: 22px;
+                width: 100px;
+            }
+            .btn-submit {
+                font-size: 20px;
+                padding: 4px 20px;
+            }
+            .hangman-svg {
+                width: 100px;
+                height: 130px;
+            }
+            .vidas {
+                font-size: 16px;
+                padding: 4px 12px;
+            }
+            .game-title {
+                font-size: 18px;
+            }
+            .table-badge {
+                font-size: 22px;
+                line-height: 36px;
+                padding: 0 12px;
+            }
+            .welcome h1 {
+                font-size: 28px;
+            }
+            .timer-bar {
+                width: 80px;
+            }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-8px);
+            }
+            75% {
+                transform: translateX(8px);
+            }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.4s ease;
+        }
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.7);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.20/babel.min.js">
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback } = React;
+
+        const TABLA_MIN = 2;
+        const TABLA_MAX = 15;
+        const MAX_MULTIPLICADOR = 10;
+        const CORRECTAS_PARA_DOMINAR = 10; // 10 aciertos para dominar la tabla
+        const MAX_ERRORES = 7; // 7 partes del ahorcado
+        const TIEMPO_PREGUNTA = 8; // segundos
+
+        // ─── COMPONENTE AHORCADO SVG ───
+        function Hangman({ errores }) {
+            // 7 partes: 1:cuerda, 2:cabeza, 3:tronco, 4:brazo izq, 5:brazo der, 6:pierna izq, 7:pierna der
+            return (
+                <div className="hangman-container">
+                    <svg className="hangman-svg" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+                        {/* Base y poste */}
+                        <line x1="10" y1="120" x2="90" y2="120" stroke="#2d1b3a" strokeWidth="3" />
+                        <line x1="30" y1="120" x2="30" y2="10" stroke="#2d1b3a" strokeWidth="3" />
+                        <line x1="30" y1="10" x2="70" y2="10" stroke="#2d1b3a" strokeWidth="3" />
+                        <line x1="70" y1="10" x2="70" y2="25" stroke="#2d1b3a" strokeWidth="3" />
+
+                        {/* Cuerda (error >=1) */}
+                        <line x1="70" y1="25" x2="70" y2="35" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 1 ? 'visible' : ''}`} />
+
+                        {/* Cabeza (error >=2) */}
+                        <circle cx="70" cy="42" r="8" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 2 ? 'visible' : ''}`} />
+
+                        {/* Tronco (error >=3) */}
+                        <line x1="70" y1="50" x2="70" y2="72" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 3 ? 'visible' : ''}`} />
+
+                        {/* Brazo izquierdo (error >=4) */}
+                        <line x1="70" y1="55" x2="53" y2="68" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 4 ? 'visible' : ''}`} />
+
+                        {/* Brazo derecho (error >=5) */}
+                        <line x1="70" y1="55" x2="87" y2="68" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 5 ? 'visible' : ''}`} />
+
+                        {/* Pierna izquierda (error >=6) */}
+                        <line x1="70" y1="72" x2="56" y2="95" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 6 ? 'visible' : ''}`} />
+
+                        {/* Pierna derecha (error >=7) */}
+                        <line x1="70" y1="72" x2="84" y2="95" stroke="#2d1b3a" strokeWidth="2.5"
+                        className={`body-part ${errores >= 7 ? 'visible' : ''}`} />
+                    </svg>
+                </div>
+            );
+        }
+
+        // ─── COMPONENTE PRINCIPAL ───
+        function App() {
+            const [nombre, setNombre] = useState('');
+            const [empezado, setEmpezado] = useState(false);
+
+            // Progreso
+            const [tablaActual, setTablaActual] = useState(TABLA_MIN);
+            const [aciertosEnTabla, setAciertosEnTabla] = useState(0);
+            const [tablasDominadas, setTablasDominadas] = useState(new Set());
+            const [errores, setErrores] = useState(0);
+
+            // Pregunta
+            const [multiplicando, setMultiplicando] = useState(2);
+            const [multiplicador, setMultiplicador] = useState(1);
+            const [respuestaUsuario, setRespuestaUsuario] = useState('');
+            const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
+            const [feedbackAnim, setFeedbackAnim] = useState(false);
+
+            // Control de flujo
+            const [esperandoSiguiente, setEsperandoSiguiente] = useState(false);
+            const [contadorPreguntas, setContadorPreguntas] = useState(0);
+            const [modoRepaso, setModoRepaso] = useState(false);
+            const [tablaRepaso, setTablaRepaso] = useState(null);
+            const [estadoJuego, setEstadoJuego] = useState('jugando');
+
+            // Temporizador
+            const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
+            const timerIntervalRef = useRef(null);
+
+            // Repeticiones pendientes: clave "tabla-mult" -> número de veces que debe repetirse
+            const [repeticiones, setRepeticiones] = useState({});
+
+            const inputRef = useRef(null);
+            const timeoutRef = useRef(null);
+
+            // ─── LIMPIAR TEMPORIZADOR ───
+            const limpiarTimer = useCallback(() => {
+                if (timerIntervalRef.current) {
+                    clearInterval(timerIntervalRef.current);
+                    timerIntervalRef.current = null;
+                }
+            }, []);
+
+            // ─── INICIAR TEMPORIZADOR ───
+            const iniciarTimer = useCallback(() => {
+                limpiarTimer();
+                setTiempoRestante(TIEMPO_PREGUNTA);
+                timerIntervalRef.current = setInterval(() => {
+                    setTiempoRestante(prev => {
+                        if (prev <= 1) {
+                            // Tiempo agotado
+                            clearInterval(timerIntervalRef.current);
+                            timerIntervalRef.current = null;
+                            // Disparar error por timeout
+                            manejarTimeout();
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+            }, [limpiarTimer]);
+
+            // ─── MANEJAR TIMEOUT ───
+            const manejarTimeout = useCallback(() => {
+                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
+                // Considerar como error
+                const tabla = multiplicando;
+                const mult = multiplicador;
+                // Agregar repetición (10 veces)
+                agregarRepeticion(tabla, mult);
+
+                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
+                setFeedbackAnim(true);
+
+                // Sumar error
+                const nuevosErrores = errores + 1;
+                setErrores(nuevosErrores);
+                if (!modoRepaso) {
+                    setAciertosEnTabla(0);
+                }
+
+                if (nuevosErrores >= MAX_ERRORES) {
+                    setEstadoJuego('gameover');
+                    setEsperandoSiguiente(true);
+                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                    limpiarTimer();
+                    return;
+                }
+
+                // Pasar a siguiente inmediatamente (con la lógica de repetición)
+                setEsperandoSiguiente(true);
+                limpiarTimer();
+                // Cargar siguiente pregunta sin delay
+                cargarNuevaPregunta();
+            }, [multiplicando, multiplicador, errores, modoRepaso, estadoJuego, esperandoSiguiente, limpiarTimer]);
+
+            // ─── AGREGAR REPETICIÓN ───
+            const agregarRepeticion = useCallback((tabla, mult) => {
+                const clave = `${tabla}-${mult}`;
+                setRepeticiones(prev => {
+                    const newRep = { ...prev };
+                    newRep[clave] = (newRep[clave] || 0) + 10;
+                    return newRep;
+                });
+            }, []);
+
+            // ─── GENERAR PREGUNTA (con prioridad de repeticiones) ───
+            const generarPregunta = useCallback(() => {
+                // Buscar si hay repeticiones pendientes
+                const claves = Object.keys(repeticiones).filter(k => repeticiones[k] > 0);
+                if (claves.length > 0) {
+                    const clave = claves[0];
+                    const [tabla, mult] = clave.split('-').map(Number);
+                    // Decrementar contador
+                    setRepeticiones(prev => {
+                        const newRep = { ...prev };
+                        newRep[clave] = newRep[clave] - 1;
+                        if (newRep[clave] <= 0) delete newRep[clave];
+                        return newRep;
+                    });
+                    return { multiplicando: tabla, multiplicador: mult, esRepeticion: true };
+                } else {
+                    // Generar aleatoria de la tabla actual
+                    const mult = Math.floor(Math.random() * MAX_MULTIPLICADOR) + 1;
+                    return { multiplicando: tablaActual, multiplicador: mult, esRepeticion: false };
+                }
+            }, [repeticiones, tablaActual]);
+
+            // ─── CARGAR NUEVA PREGUNTA ───
+            const cargarNuevaPregunta = useCallback(() => {
+                if (estadoJuego !== 'jugando') return;
+
+                const pregunta = generarPregunta();
+                setMultiplicando(pregunta.multiplicando);
+                setMultiplicador(pregunta.multiplicador);
+                setModoRepaso(pregunta.esRepeticion);
+                setTablaRepaso(pregunta.esRepeticion ? pregunta.multiplicando : null);
+                setRespuestaUsuario('');
+                setEsperandoSiguiente(false);
+                setFeedback({ mensaje: '', tipo: '' });
+                setFeedbackAnim(false);
+
+                // Iniciar temporizador
+                iniciarTimer();
+
+                setTimeout(() => inputRef.current?.focus(), 50);
+            }, [estadoJuego, generarPregunta, iniciarTimer]);
+
+            // ─── AVANZAR TABLA ───
+            const avanzarTabla = useCallback(() => {
+                const siguiente = tablaActual + 1;
+                if (siguiente <= TABLA_MAX) {
+                    setTablaActual(siguiente);
+                    setAciertosEnTabla(0);
+                    setFeedback({ mensaje: `🎉 ¡Tabla del ${tablaActual} dominada! → Ahora tabla del ${siguiente}`,
+                        tipo: 'success' });
+                } else {
+                    setEstadoJuego('victoria');
+                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
+                        tipo: 'success' });
+                    setEsperandoSiguiente(true);
+                    limpiarTimer();
+                }
+            }, [tablaActual, limpiarTimer]);
+
+            // ─── PROCESAR RESPUESTA ───
+            const procesarRespuesta = useCallback(() => {
+                if (esperandoSiguiente || estadoJuego !== 'jugando') return;
+                const input = respuestaUsuario.trim();
+                if (input === '') return;
+
+                const respuestaNum = Number(input);
+                if (isNaN(respuestaNum)) {
+                    setFeedback({ mensaje: '✏️ Escribe un número válido', tipo: 'info' });
+                    setRespuestaUsuario('');
+                    return;
+                }
+
+                const correcto = multiplicando * multiplicador;
+                const esCorrecto = respuestaNum === correcto;
+
+                // Detener temporizador
+                limpiarTimer();
+
+                setContadorPreguntas(prev => prev + 1);
+
+                if (esCorrecto) {
+                    setFeedback({ mensaje: `✅ ¡Muy bien! ${multiplicando} × ${multiplicador} = ${correcto}`,
+                    tipo: 'correct' });
+                    setFeedbackAnim(true);
+
+                    // Si es acierto y no es repetición forzada, contar para la tabla
+                    if (!modoRepaso) {
+                        const nuevosAciertos = aciertosEnTabla + 1;
+                        setAciertosEnTabla(nuevosAciertos);
+                        if (nuevosAciertos >= CORRECTAS_PARA_DOMINAR) {
+                            const nuevasDominadas = new Set(tablasDominadas);
+                            nuevasDominadas.add(tablaActual);
+                            setTablasDominadas(nuevasDominadas);
+                            setEsperandoSiguiente(true);
+                            // Avanzar tabla inmediatamente (sin delay)
+                            avanzarTabla();
+                            return;
+                        }
+                    } else {
+                        // Repetición acertada: no afecta aciertos de tabla
+                    }
+
+                    // Pasar a siguiente inmediatamente
+                    setEsperandoSiguiente(true);
+                    cargarNuevaPregunta();
+                } else {
+                    // Error
+                    setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
+                    setFeedbackAnim(true);
+
+                    // Agregar repetición (10 veces)
+                    agregarRepeticion(multiplicando, multiplicador);
+
+                    const nuevosErrores = errores + 1;
+                    setErrores(nuevosErrores);
+                    if (!modoRepaso) {
+                        setAciertosEnTabla(0);
+                    }
+
+                    if (nuevosErrores >= MAX_ERRORES) {
+                        setEstadoJuego('gameover');
+                        setEsperandoSiguiente(true);
+                        setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                        return;
+                    }
+
+                    // Pasar a siguiente inmediatamente
+                    setEsperandoSiguiente(true);
+                    cargarNuevaPregunta();
+                }
+            }, [respuestaUsuario, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
+                tablaActual, modoRepaso, errores, estadoJuego, limpiarTimer, agregarRepeticion, avanzarTabla,
+                cargarNuevaPregunta
+            ]);
+
+            // ─── REINICIAR ───
+            const reiniciarJuego = useCallback(() => {
+                limpiarTimer();
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                setTablaActual(TABLA_MIN);
+                setAciertosEnTabla(0);
+                setTablasDominadas(new Set());
+                setErrores(0);
+                setContadorPreguntas(0);
+                setModoRepaso(false);
+                setTablaRepaso(null);
+                setFeedback({ mensaje: '🔄 ¡Reiniciado!', tipo: 'info' });
+                setEsperandoSiguiente(false);
+                setRespuestaUsuario('');
+                setEstadoJuego('jugando');
+                setRepeticiones({});
+                setTiempoRestante(TIEMPO_PREGUNTA);
+                cargarNuevaPregunta();
+            }, [limpiarTimer, cargarNuevaPregunta]);
+
+            // ─── EFECTO INICIAL ───
+            useEffect(() => {
+                if (empezado) {
+                    cargarNuevaPregunta();
+                }
+            }, [empezado, cargarNuevaPregunta]);
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    procesarRespuesta();
+                }
+            };
+
+            const dominadasArray = [...tablasDominadas].sort((a, b) => a - b);
+            const masteryPercent = Math.min(100, (aciertosEnTabla / CORRECTAS_PARA_DOMINAR) * 100);
+            const vidasRestantes = MAX_ERRORES - errores;
+
+            // Color de la barra de tiempo
+            let timerClass = '';
+            if (tiempoRestante <= 3) timerClass = 'danger';
+            else if (tiempoRestante <= 5) timerClass = 'warning';
+
+            // ─── RENDER ───
+
+            if (!empezado) {
+                return (
+                    <div className="game-card welcome">
+                        <span className="emoji-big">⏳</span>
+                        <h1>Ahorcado de Tablas</h1>
+                        <p className="subtitle">✨ 8 segundos por pregunta · 7 oportunidades ✨</p>
+                        <div className="name-input-group">
+                            <label htmlFor="nombreInput">👧 ¿Cómo te llamas?</label>
+                            <input
+                                id="nombreInput"
+                                className="name-input"
+                                type="text"
+                                value={nombre}
+                                onChange={(e) => setNombre(e.target.value)}
+                                placeholder="Escribe tu nombre..."
+                                onKeyDown={(e) => { if (e.key === 'Enter' && nombre.trim()) setEmpezado(true); }}
+                                autoFocus
+                            />
+                            <button
+                                className="btn-start"
+                                onClick={() => { if (nombre.trim()) setEmpezado(true); }}
+                                disabled={!nombre.trim()}
+                            >
+                                🚀 ¡Jugar!
+                            </button>
+                        </div>
+                        <div style={{ marginTop: 16, fontSize: 14, color: '#7a5a8f' }}>
+                            ⏱️ Contesta antes de que se acabe el tiempo.<br />
+                            ❌ Cada fallo añade una parte del ahorcado (7 errores = pierdes).<br />
+                            🔁 Las operaciones falladas se repiten 10 veces para aprender.
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="game-card">
+                    <div className="header">
+                        <div className="game-title">
+                            🎯 Tablas
+                            <span>{tablaActual}</span>
+                        </div>
+                        <div className="vidas">
+                            ❤️ {vidasRestantes} / {MAX_ERRORES}
+                        </div>
+                    </div>
+
+                    <div className="table-progress">
+                        <div className="table-badge">
+                            {tablaActual} <small>×</small>
+                        </div>
+                        <div className="mastery-bar">
+                            <div className="mastery-track">
+                                <div className="mastery-fill" style={{ width: `${masteryPercent}%` }} />
+                            </div>
+                            <span className="mastery-label">{Math.round(masteryPercent)}%</span>
+                        </div>
+                    </div>
+
+                    {dominadasArray.length > 0 && (
+                        <div className="mastered-chips">
+                            {dominadasArray.map(t => (
+                                <span key={t} className="mastered-chip">✅ {t}</span>
+                            ))}
+                            {modoRepaso && (
+                                <span className="mastered-chip review">🔄 repaso {tablaRepaso}</span>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Temporizador */}
+                    <div className="timer-container">
+                        <div className="timer-bar">
+                            <div className={`timer-fill ${timerClass}`} style={{ width: `${(tiempoRestante / TIEMPO_PREGUNTA) * 100}%` }} />
+                        </div>
+                        <span className="timer-text">{tiempoRestante}s</span>
+                    </div>
+
+                    {/* Ahorcado */}
+                    <Hangman errores={errores} />
+
+                    <div className="question-area">
+                        <div className="question-text">
+                            <span className="highlight">{multiplicando}</span>
+                            <span className="sign">×</span>
+                            <span className="highlight">{multiplicador}</span>
+                            <span className="eq">=</span>
+                            <span style={{ minWidth: 50, display: 'inline-block', color: '#aa88c4' }}>?</span>
+                        </div>
+
+                        <div className="answer-row">
+                            <input
+                                ref={inputRef}
+                                className="answer-input"
+                                type="number"
+                                value={respuestaUsuario}
+                                onChange={(e) => setRespuestaUsuario(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                disabled={esperandoSiguiente || estadoJuego !== 'jugando' || tiempoRestante === 0}
+                                autoFocus
+                            />
+                            <button
+                                className="btn-submit"
+                                onClick={procesarRespuesta}
+                                disabled={esperandoSiguiente || respuestaUsuario.trim() === '' || estadoJuego !== 'jugando' || tiempoRestante === 0}
+                            >
+                                ➤
+                            </button>
+                        </div>
+
+                        <div className={`feedback ${feedback.tipo} ${feedbackAnim ? 'bounce-in' : ''}`}>
+                            {feedback.mensaje}
+                        </div>
+                    </div>
+
+                    {(estadoJuego === 'gameover' || estadoJuego === 'victoria') && (
+                        <div className={`game-over-overlay ${estadoJuego === 'victoria' ? 'win-overlay' : ''}`}>
+                            <h2>{estadoJuego === 'gameover' ? '💀 ¡Game Over!' : '🎉 ¡Ganaste!'}</h2>
+                            <p className="sub">
+                                {estadoJuego === 'gameover'
+                                    ? `Has cometido ${errores} errores. ¡Ánimo, inténtalo de nuevo!`
+                                    : `¡Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! Eres una campeona.`}
+                            </p>
+                            <button className="btn-secondary success" onClick={reiniciarJuego} style={{ marginTop: 12 }}>
+                                🔄 Volver a jugar
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="action-row">
+                        <button className="btn-secondary" onClick={reiniciarJuego}>
+                            🔄 Reiniciar
+                        </button>
+                        <button
+                            className="btn-secondary"
+                            onClick={() => {
+                                limpiarTimer();
+                                cargarNuevaPregunta();
+                            }}
+                            disabled={estadoJuego !== 'jugando'}
+                        >
+                            ⏭ Siguiente
+                        </button>
+                    </div>
+
+                    <div style={{ marginTop: 14, fontSize: 13, color: '#9a80ab' }}>
+                        👧 {nombre} · {dominadasArray.length} tablas dominadas · {contadorPreguntas} preguntas
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
