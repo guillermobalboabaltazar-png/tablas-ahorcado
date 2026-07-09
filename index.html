@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>⏳ Ahorcado de Tablas · Secuencial</title>
+    <title>⏳ Ahorcado de Tablas · Opciones</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
-        /* ===== ESTILOS COMPLETOS (EXACTAMENTE LOS MISMOS QUE TU CÓDIGO) ===== */
         * {
             margin: 0;
             padding: 0;
@@ -152,7 +151,6 @@
             white-space: nowrap;
         }
 
-        /* ─── TEMPORIZADOR ─── */
         .timer-container {
             display: flex;
             align-items: center;
@@ -192,7 +190,6 @@
             min-width: 40px;
         }
 
-        /* ─── AHORCADO SVG ─── */
         .hangman-container {
             display: flex;
             justify-content: center;
@@ -222,7 +219,6 @@
             opacity: 1;
         }
 
-        /* ─── PREGUNTA ─── */
         .question-area {
             background: white;
             border-radius: 48px;
@@ -256,11 +252,11 @@
             display: inline-block;
         }
 
-        /* ─── OPCIONES MÚLTIPLES (MISMO ESTILO QUE LOS BOTONES) ─── */
+        /* ─── OPCIONES MÚLTIPLES ─── */
         .options-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            gap: 10px;
             margin: 18px 0 8px;
         }
 
@@ -270,7 +266,7 @@
             font-weight: 700;
             padding: 14px 0;
             border: none;
-            border-radius: 40px;
+            border-radius: 30px;
             background: #ede4f5;
             color: #3f2355;
             box-shadow: 0 6px 0 #c5b2d3;
@@ -593,14 +589,13 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback } = React;
 
-        // ===== CONFIGURACIÓN =====
         const TABLA_MIN = 2;
-        const TABLA_MAX = 19;
+        const TABLA_MAX = 15;
         const MAX_MULTIPLICADOR = 10;
+        const CORRECTAS_PARA_DOMINAR = 10;
         const MAX_ERRORES = 7;
         const TIEMPO_PREGUNTA = 8;
-        const NUM_OPCIONES = 6;
-        const ACIERTOS_POR_OPERACION = 10; // 10 aciertos consecutivos para dominar una operación
+        const NUM_OPCIONES = 6; // 5 incorrectas + 1 correcta
 
         // ─── COMPONENTE AHORCADO SVG ───
         function Hangman({ errores }) {
@@ -635,55 +630,58 @@
             const [nombre, setNombre] = useState('');
             const [empezado, setEmpezado] = useState(false);
 
-            // Progreso secuencial por operación
             const [tablaActual, setTablaActual] = useState(TABLA_MIN);
-            const [multiplicadorActual, setMultiplicadorActual] = useState(1);
-            const [aciertosOperacion, setAciertosOperacion] = useState(0);
+            const [aciertosEnTabla, setAciertosEnTabla] = useState(0);
             const [tablasDominadas, setTablasDominadas] = useState(new Set());
-
             const [errores, setErrores] = useState(0);
 
-            // Estado de la pregunta actual
-            const [multiplicando, setMultiplicando] = useState(TABLA_MIN);
+            const [multiplicando, setMultiplicando] = useState(2);
             const [multiplicador, setMultiplicador] = useState(1);
             const [opciones, setOpciones] = useState([]);
-            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
+            const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null); // índice
             const [feedback, setFeedback] = useState({ mensaje: '', tipo: '' });
             const [feedbackAnim, setFeedbackAnim] = useState(false);
 
             const [esperandoSiguiente, setEsperandoSiguiente] = useState(false);
             const [contadorPreguntas, setContadorPreguntas] = useState(0);
-            const [estadoJuego, setEstadoJuego] = useState('jugando'); // 'jugando', 'gameover', 'victoria'
+            const [modoRepaso, setModoRepaso] = useState(false);
+            const [tablaRepaso, setTablaRepaso] = useState(null);
+            const [estadoJuego, setEstadoJuego] = useState('jugando');
 
             const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_PREGUNTA);
-
-            // Refs para temporizadores (igual que en tu código)
             const timerIntervalRef = useRef(null);
-            const timerTimeoutRef = useRef(null);
-            const timeoutExecutedRef = useRef(false);
-            const currentQuestionRef = useRef({ mult: TABLA_MIN, mult2: 1 });
 
-            // ─── LIMPIAR TEMPORIZADORES ───
-            const limpiarTimers = useCallback(() => {
+            const [repeticiones, setRepeticiones] = useState({});
+
+            const timeoutRef = useRef(null);
+
+            // ─── LIMPIAR TEMPORIZADOR ───
+            const limpiarTimer = useCallback(() => {
                 if (timerIntervalRef.current) {
                     clearInterval(timerIntervalRef.current);
                     timerIntervalRef.current = null;
                 }
-                if (timerTimeoutRef.current) {
-                    clearTimeout(timerTimeoutRef.current);
-                    timerTimeoutRef.current = null;
-                }
-                timeoutExecutedRef.current = false;
             }, []);
 
-            // ─── GENERAR OPCIONES (igual que antes) ───
+            // ─── AGREGAR REPETICIÓN ───
+            const agregarRepeticion = useCallback((tabla, mult) => {
+                const clave = `${tabla}-${mult}`;
+                setRepeticiones(prev => {
+                    const newRep = { ...prev };
+                    newRep[clave] = (newRep[clave] || 0) + 10;
+                    return newRep;
+                });
+            }, []);
+
+            // ─── GENERAR OPCIONES ───
             const generarOpciones = (correcto) => {
+                // Generar 5 números distintos a correcto y entre sí, en un rango razonable (1..200)
                 const opcionesSet = new Set();
                 opcionesSet.add(correcto);
                 let intentos = 0;
                 const maxIntentos = 1000;
                 while (opcionesSet.size < NUM_OPCIONES && intentos < maxIntentos) {
-                    const offset = Math.floor(Math.random() * 20) + 1;
+                    const offset = Math.floor(Math.random() * 20) + 1; // variación
                     const signo = Math.random() < 0.5 ? 1 : -1;
                     let candidato = correcto + signo * offset;
                     if (candidato < 1) candidato = correcto + offset;
@@ -692,6 +690,7 @@
                     }
                     intentos++;
                 }
+                // Si no se completaron, rellenar con valores seguros
                 let fallback = 1;
                 while (opcionesSet.size < NUM_OPCIONES) {
                     if (!opcionesSet.has(fallback) && fallback !== correcto) {
@@ -699,6 +698,7 @@
                     }
                     fallback++;
                 }
+                // Mezclar
                 const arr = Array.from(opcionesSet);
                 for (let i = arr.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -707,89 +707,32 @@
                 return arr;
             };
 
-            // ─── AVANZAR A LA SIGUIENTE OPERACIÓN O TABLA ───
-            const avanzarOperacion = useCallback(() => {
-                if (multiplicadorActual < MAX_MULTIPLICADOR) {
-                    const nuevoMult = multiplicadorActual + 1;
-                    setMultiplicadorActual(nuevoMult);
-                    setAciertosOperacion(0);
-                    setFeedback({ mensaje: `✅ ¡Operación ${tablaActual}×${multiplicadorActual} dominada! Siguiente: ${tablaActual}×${nuevoMult}`,
-                        tipo: 'success' });
+            // ─── GENERAR PREGUNTA (con prioridad de repeticiones) ───
+            const generarPregunta = useCallback(() => {
+                const claves = Object.keys(repeticiones).filter(k => repeticiones[k] > 0);
+                if (claves.length > 0) {
+                    const clave = claves[0];
+                    const [tabla, mult] = clave.split('-').map(Number);
+                    setRepeticiones(prev => {
+                        const newRep = { ...prev };
+                        newRep[clave] = newRep[clave] - 1;
+                        if (newRep[clave] <= 0) delete newRep[clave];
+                        return newRep;
+                    });
+                    return { multiplicando: tabla, multiplicador: mult, esRepeticion: true };
                 } else {
-                    // Se completó la tabla entera
-                    const nuevasDominadas = new Set(tablasDominadas);
-                    nuevasDominadas.add(tablaActual);
-                    setTablasDominadas(nuevasDominadas);
-
-                    if (tablaActual < TABLA_MAX) {
-                        const nuevaTabla = tablaActual + 1;
-                        setTablaActual(nuevaTabla);
-                        setMultiplicadorActual(1);
-                        setAciertosOperacion(0);
-                        setFeedback({ mensaje: `🎉 ¡Tabla del ${tablaActual} completada! → Ahora tabla del ${nuevaTabla}`,
-                            tipo: 'success' });
-                    } else {
-                        // ¡Victoria!
-                        setEstadoJuego('victoria');
-                        setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
-                            tipo: 'success' });
-                        setEsperandoSiguiente(true);
-                        limpiarTimers();
-                        return;
-                    }
+                    const mult = Math.floor(Math.random() * MAX_MULTIPLICADOR) + 1;
+                    return { multiplicando: tablaActual, multiplicador: mult, esRepeticion: false };
                 }
-                setEsperandoSiguiente(true);
-                setTimeout(() => {
-                    cargarNuevaPregunta();
-                }, 1500);
-            }, [tablaActual, multiplicadorActual, tablasDominadas, limpiarTimers]);
+            }, [repeticiones, tablaActual]);
 
-            // ─── MANEJAR TIMEOUT (se ejecuta cuando se acaba el tiempo) ───
-            const manejarTimeout = useCallback((tabla, mult) => {
-                if (timeoutExecutedRef.current) return;
-                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
-
-                timeoutExecutedRef.current = true;
-                limpiarTimers();
-
-                const correcto = tabla * mult;
-                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${correcto}`, tipo: 'wrong' });
-                setFeedbackAnim(true);
-
-                // Consumir corazón
-                const nuevosErrores = errores + 1;
-                setErrores(nuevosErrores);
-                // Reiniciar aciertos de la operación actual
-                setAciertosOperacion(0);
-
-                // Resaltar la respuesta correcta
-                setRespuestaSeleccionada(-1);
-
-                if (nuevosErrores >= MAX_ERRORES) {
-                    setEstadoJuego('gameover');
-                    setEsperandoSiguiente(true);
-                    setFeedback({ mensaje: '💀 ¡GAME OVER! Reiniciando...', tipo: 'wrong' });
-                    setTimeout(() => {
-                        reiniciarJuego();
-                    }, 3000);
-                    return;
-                }
-
-                setEsperandoSiguiente(true);
-                setTimeout(() => {
-                    cargarNuevaPregunta(); // Repite la misma operación
-                }, 1200);
-            }, [errores, estadoJuego, esperandoSiguiente, limpiarTimers]);
-
-            // ─── CARGAR NUEVA PREGUNTA (basada en la operación actual) ───
+            // ─── CARGAR NUEVA PREGUNTA ───
             const cargarNuevaPregunta = useCallback(() => {
                 if (estadoJuego !== 'jugando') return;
 
-                limpiarTimers();
-                timeoutExecutedRef.current = false;
-
-                const mult = tablaActual;
-                const mult2 = multiplicadorActual;
+                const pregunta = generarPregunta();
+                const mult = pregunta.multiplicando;
+                const mult2 = pregunta.multiplicador;
                 const correcto = mult * mult2;
                 const opcs = generarOpciones(correcto);
 
@@ -797,79 +740,129 @@
                 setMultiplicador(mult2);
                 setOpciones(opcs);
                 setRespuestaSeleccionada(null);
+                setModoRepaso(pregunta.esRepeticion);
+                setTablaRepaso(pregunta.esRepeticion ? mult : null);
                 setEsperandoSiguiente(false);
                 setFeedback({ mensaje: '', tipo: '' });
                 setFeedbackAnim(false);
 
-                currentQuestionRef.current = { mult, mult2 };
-
+                // Iniciar temporizador
+                limpiarTimer();
                 setTiempoRestante(TIEMPO_PREGUNTA);
-
-                // Intervalo para la barra de tiempo
                 timerIntervalRef.current = setInterval(() => {
                     setTiempoRestante(prev => {
                         if (prev <= 1) {
+                            clearInterval(timerIntervalRef.current);
+                            timerIntervalRef.current = null;
+                            // Timeout → error
+                            manejarTimeout(mult, mult2);
                             return 0;
                         }
                         return prev - 1;
                     });
                 }, 1000);
+            }, [estadoJuego, generarPregunta, limpiarTimer]);
 
-                // Timeout principal
-                timerTimeoutRef.current = setTimeout(() => {
-                    const { mult: m, mult2: m2 } = currentQuestionRef.current;
-                    manejarTimeout(m, m2);
-                }, TIEMPO_PREGUNTA * 1000);
+            // ─── MANEJAR TIMEOUT ───
+            const manejarTimeout = useCallback((tabla, mult) => {
+                if (estadoJuego !== 'jugando' || esperandoSiguiente) return;
+                // Agregar repetición
+                agregarRepeticion(tabla, mult);
+                setFeedback({ mensaje: `⏰ ¡Tiempo! ${tabla} × ${mult} = ${tabla * mult}`, tipo: 'wrong' });
+                setFeedbackAnim(true);
 
-            }, [estadoJuego, tablaActual, multiplicadorActual, limpiarTimers, manejarTimeout]);
+                const nuevosErrores = errores + 1;
+                setErrores(nuevosErrores);
+                if (!modoRepaso) {
+                    setAciertosEnTabla(0);
+                }
 
-            // ─── PROCESAR RESPUESTA ───
+                if (nuevosErrores >= MAX_ERRORES) {
+                    setEstadoJuego('gameover');
+                    setEsperandoSiguiente(true);
+                    setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
+                    limpiarTimer();
+                    return;
+                }
+
+                // Marcar respuesta como incorrecta para mostrar opciones
+                setRespuestaSeleccionada(-1); // valor especial para indicar timeout
+                // No pasamos a siguiente inmediatamente, dejamos que el feedback se vea y luego cargamos
+                setEsperandoSiguiente(true);
+                limpiarTimer();
+                setTimeout(() => {
+                    cargarNuevaPregunta();
+                }, 1200);
+            }, [errores, modoRepaso, estadoJuego, esperandoSiguiente, agregarRepeticion, limpiarTimer, cargarNuevaPregunta]);
+
+            // ─── AVANZAR TABLA ───
+            const avanzarTabla = useCallback(() => {
+                const siguiente = tablaActual + 1;
+                if (siguiente <= TABLA_MAX) {
+                    setTablaActual(siguiente);
+                    setAciertosEnTabla(0);
+                    setFeedback({ mensaje: `🎉 ¡Tabla del ${tablaActual} dominada! → Ahora tabla del ${siguiente}`,
+                        tipo: 'success' });
+                } else {
+                    setEstadoJuego('victoria');
+                    setFeedback({ mensaje: `🏆 ¡FELICIDADES! Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! 🏆`,
+                        tipo: 'success' });
+                    setEsperandoSiguiente(true);
+                    limpiarTimer();
+                }
+            }, [tablaActual, limpiarTimer]);
+
+            // ─── PROCESAR RESPUESTA (clic en opción) ───
             const procesarRespuesta = useCallback((indice) => {
                 if (esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null) return;
                 const valor = opciones[indice];
                 const correcto = multiplicando * multiplicador;
                 const esCorrecto = valor === correcto;
 
-                limpiarTimers();
-                timeoutExecutedRef.current = true;
+                limpiarTimer();
 
                 setRespuestaSeleccionada(indice);
                 setContadorPreguntas(prev => prev + 1);
 
                 if (esCorrecto) {
-                    // Mensaje de felicitación
-                    setFeedback({ mensaje: `✅ ¡Muy bien! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'correct' });
+                    setFeedback({ mensaje: `✅ ¡Muy bien! ${multiplicando} × ${multiplicador} = ${correcto}`,
+                    tipo: 'correct' });
                     setFeedbackAnim(true);
 
-                    const nuevosAciertos = aciertosOperacion + 1;
-                    setAciertosOperacion(nuevosAciertos);
-
-                    if (nuevosAciertos >= ACIERTOS_POR_OPERACION) {
-                        setEsperandoSiguiente(true);
-                        avanzarOperacion();
-                        return;
+                    if (!modoRepaso) {
+                        const nuevosAciertos = aciertosEnTabla + 1;
+                        setAciertosEnTabla(nuevosAciertos);
+                        if (nuevosAciertos >= CORRECTAS_PARA_DOMINAR) {
+                            const nuevasDominadas = new Set(tablasDominadas);
+                            nuevasDominadas.add(tablaActual);
+                            setTablasDominadas(nuevasDominadas);
+                            setEsperandoSiguiente(true);
+                            avanzarTabla();
+                            return;
+                        }
                     }
-
+                    // Siguiente inmediata
                     setEsperandoSiguiente(true);
                     setTimeout(() => {
                         cargarNuevaPregunta();
-                    }, 1500);
+                    }, 800);
                 } else {
                     // Error
                     setFeedback({ mensaje: `❌ ¡Oh no! ${multiplicando} × ${multiplicador} = ${correcto}`, tipo: 'wrong' });
                     setFeedbackAnim(true);
 
+                    agregarRepeticion(multiplicando, multiplicador);
+
                     const nuevosErrores = errores + 1;
                     setErrores(nuevosErrores);
-                    setAciertosOperacion(0);
+                    if (!modoRepaso) {
+                        setAciertosEnTabla(0);
+                    }
 
                     if (nuevosErrores >= MAX_ERRORES) {
                         setEstadoJuego('gameover');
                         setEsperandoSiguiente(true);
-                        setFeedback({ mensaje: '💀 ¡GAME OVER! Reiniciando...', tipo: 'wrong' });
-                        setTimeout(() => {
-                            reiniciarJuego();
-                        }, 3000);
+                        setFeedback({ mensaje: '💀 ¡Has sido ahorcado!', tipo: 'wrong' });
                         return;
                     }
 
@@ -878,27 +871,30 @@
                         cargarNuevaPregunta();
                     }, 1200);
                 }
-            }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosOperacion,
-                errores, estadoJuego, respuestaSeleccionada, limpiarTimers, avanzarOperacion, cargarNuevaPregunta
+            }, [opciones, multiplicando, multiplicador, esperandoSiguiente, aciertosEnTabla, tablasDominadas,
+                tablaActual, modoRepaso, errores, estadoJuego, respuestaSeleccionada, limpiarTimer, agregarRepeticion,
+                avanzarTabla, cargarNuevaPregunta
             ]);
 
-            // ─── REINICIAR JUEGO (desde cero) ───
+            // ─── REINICIAR ───
             const reiniciarJuego = useCallback(() => {
-                limpiarTimers();
-                timeoutExecutedRef.current = false;
+                limpiarTimer();
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
                 setTablaActual(TABLA_MIN);
-                setMultiplicadorActual(1);
-                setAciertosOperacion(0);
+                setAciertosEnTabla(0);
                 setTablasDominadas(new Set());
                 setErrores(0);
                 setContadorPreguntas(0);
-                setFeedback({ mensaje: '🔄 Reiniciado desde la tabla 2', tipo: 'info' });
+                setModoRepaso(false);
+                setTablaRepaso(null);
+                setFeedback({ mensaje: '🔄 ¡Reiniciado!', tipo: 'info' });
                 setEsperandoSiguiente(false);
                 setRespuestaSeleccionada(null);
                 setEstadoJuego('jugando');
+                setRepeticiones({});
                 setTiempoRestante(TIEMPO_PREGUNTA);
                 cargarNuevaPregunta();
-            }, [limpiarTimers, cargarNuevaPregunta]);
+            }, [limpiarTimer, cargarNuevaPregunta]);
 
             // ─── EFECTO INICIAL ───
             useEffect(() => {
@@ -907,16 +903,15 @@
                 }
             }, [empezado, cargarNuevaPregunta]);
 
-            // ─── CÁLCULOS PARA EL RENDER (igual que antes) ───
             const dominadasArray = [...tablasDominadas].sort((a, b) => a - b);
-            const masteryPercent = Math.min(100, (aciertosOperacion / ACIERTOS_POR_OPERACION) * 100);
+            const masteryPercent = Math.min(100, (aciertosEnTabla / CORRECTAS_PARA_DOMINAR) * 100);
             const vidasRestantes = MAX_ERRORES - errores;
 
             let timerClass = '';
             if (tiempoRestante <= 3) timerClass = 'danger';
             else if (tiempoRestante <= 5) timerClass = 'warning';
 
-            // ─── RENDER (EXACTAMENTE IGUAL QUE TU CÓDIGO) ───
+            // ─── RENDER ───
 
             if (!empezado) {
                 return (
@@ -945,9 +940,9 @@
                             </button>
                         </div>
                         <div style={{ marginTop: 16, fontSize: 14, color: '#7a5a8f' }}>
-                            🔢 Aprende operación por operación (10 aciertos seguidos).<br />
-                            ❌ Cada fallo (incluido tiempo) añade una parte del ahorcado (7 errores = Game Over).<br />
-                            🏆 Tablas del 2 al 19.
+                            ⏱️ Contesta antes de que se acabe el tiempo.<br />
+                            ❌ Cada fallo añade una parte del ahorcado (7 errores = pierdes).<br />
+                            🔁 Las operaciones falladas se repiten 10 veces para aprender.
                         </div>
                     </div>
                 );
@@ -956,19 +951,24 @@
             return (
                 <div className="game-card">
                     <div className="header">
-                        <div className="game-title">🎯 Tablas <span>{tablaActual}</span></div>
-                        <div className="vidas">❤️ {vidasRestantes} / {MAX_ERRORES}</div>
+                        <div className="game-title">
+                            🎯 Tablas
+                            <span>{tablaActual}</span>
+                        </div>
+                        <div className="vidas">
+                            ❤️ {vidasRestantes} / {MAX_ERRORES}
+                        </div>
                     </div>
 
                     <div className="table-progress">
                         <div className="table-badge">
-                            {tablaActual} × {multiplicadorActual}
+                            {tablaActual} <small>×</small>
                         </div>
                         <div className="mastery-bar">
                             <div className="mastery-track">
                                 <div className="mastery-fill" style={{ width: `${masteryPercent}%` }} />
                             </div>
-                            <span className="mastery-label">{aciertosOperacion}/{ACIERTOS_POR_OPERACION}</span>
+                            <span className="mastery-label">{Math.round(masteryPercent)}%</span>
                         </div>
                     </div>
 
@@ -977,7 +977,9 @@
                             {dominadasArray.map(t => (
                                 <span key={t} className="mastered-chip">✅ {t}</span>
                             ))}
-                            {/* Mantengo el espacio para 'modoRepaso' pero nunca se usa */}
+                            {modoRepaso && (
+                                <span className="mastered-chip review">🔄 repaso {tablaRepaso}</span>
+                            )}
                         </div>
                     )}
 
@@ -1004,19 +1006,20 @@
                                 let clase = 'option-btn';
                                 const correcto = multiplicando * multiplicador;
                                 if (respuestaSeleccionada !== null) {
-                                    if (respuestaSeleccionada === -1) {
-                                        if (valor === correcto) clase += ' reveal-correct';
-                                    } else {
-                                        if (idx === respuestaSeleccionada) {
-                                            clase += valor === correcto ? ' correct-answer' : ' wrong-answer';
-                                        } else if (valor === correcto) {
-                                            clase += ' reveal-correct';
-                                        }
+                                    if (idx === respuestaSeleccionada) {
+                                        clase += valor === correcto ? ' correct-answer' : ' wrong-answer';
+                                    } else if (valor === correcto && respuestaSeleccionada !== -1) {
+                                        clase += ' reveal-correct';
                                     }
                                 }
                                 const disabled = esperandoSiguiente || estadoJuego !== 'jugando' || respuestaSeleccionada !== null;
                                 return (
-                                    <button key={idx} className={clase} onClick={() => procesarRespuesta(idx)} disabled={disabled}>
+                                    <button
+                                        key={idx}
+                                        className={clase}
+                                        onClick={() => procesarRespuesta(idx)}
+                                        disabled={disabled}
+                                    >
                                         {valor}
                                     </button>
                                 );
@@ -1030,17 +1033,15 @@
 
                     {(estadoJuego === 'gameover' || estadoJuego === 'victoria') && (
                         <div className={`game-over-overlay ${estadoJuego === 'victoria' ? 'win-overlay' : ''}`}>
-                            <h2>{estadoJuego === 'gameover' ? '💀 ¡GAME OVER!' : '🎉 ¡VICTORIA!'}</h2>
+                            <h2>{estadoJuego === 'gameover' ? '💀 ¡Game Over!' : '🎉 ¡Ganaste!'}</h2>
                             <p className="sub">
                                 {estadoJuego === 'gameover'
-                                    ? `Has cometido ${errores} errores. Reiniciando...`
+                                    ? `Has cometido ${errores} errores. ¡Ánimo, inténtalo de nuevo!`
                                     : `¡Dominaste todas las tablas del ${TABLA_MIN} al ${TABLA_MAX}! Eres una campeona.`}
                             </p>
-                            {estadoJuego === 'victoria' && (
-                                <button className="btn-secondary success" onClick={reiniciarJuego} style={{ marginTop: 12 }}>
-                                    🔄 Volver a jugar
-                                </button>
-                            )}
+                            <button className="btn-secondary success" onClick={reiniciarJuego} style={{ marginTop: 12 }}>
+                                🔄 Volver a jugar
+                            </button>
                         </div>
                     )}
 
@@ -1050,7 +1051,10 @@
                         </button>
                         <button
                             className="btn-secondary"
-                            onClick={() => { limpiarTimers(); cargarNuevaPregunta(); }}
+                            onClick={() => {
+                                limpiarTimer();
+                                cargarNuevaPregunta();
+                            }}
                             disabled={estadoJuego !== 'jugando'}
                         >
                             ⏭ Siguiente
