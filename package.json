@@ -1,0 +1,8 @@
+{
+  "name": "ahorcado-tablas-pwa",
+  "version": "1.0.0",
+  "description": "PWA Ahorcado de Tablas",
+  "scripts": {
+    "start": "python -m http.server 8000"
+  }
+}
